@@ -6,64 +6,123 @@ This project was developed as a **Senior Project** at the **Lebanese Internation
 
 ---
 
-## 🚀 Features  
-- 🔒 **VPN Integration (OpenVPN)** – Secure internet traffic on public networks  
-- 🛡️ **AdGuard Home** – Network-wide ad & tracker blocking  
-- 🔧 **Firewall & Device Management** – Block/allow devices, parental controls  
-- 📊 **Smart Queue Management (SQM)** – Optimize bandwidth and reduce latency  
-- 📡 **Guest Wi-Fi** – Isolated guest network with SSID, bandwidth limits, and QR code  
-- 💻 **Web-Based Dashboard** – Responsive UI (HTML, CSS, JS + Bash CGI)  
-- 📈 **System Monitoring** – CPU usage, system load, temperature, and speed tests  
+## Key Features
+
+**Security & Privacy**
+
+* OpenVPN support (ProtonVPN: Japan, USA, Netherlands)
+* AdGuard Home for ad, malware, and tracker blocking
+* Guest network isolation and firewall management
+
+**Network Management**
+
+* Real-time device monitoring
+* Bandwidth control per device or network
+* Parental controls: website blocking and time restrictions
+* Easy port forwarding
+
+**Web Dashboard**
+
+* Responsive interface for desktop, tablet, and mobile
+* One-click toggles for VPN, DNS, and network services
+* Built-in speed test and QR code sharing
+
+**Performance & Reliability**
+
+* Smart Queue Management (SQM) for traffic prioritization
+* Self-healing Wi-Fi and network auto-repair
+* System metrics: CPU load, temperature, and network health
+* Scheduled maintenance and automatic reboots
 
 ---
 
-## 📂 Repository Structure  
-MY-Smart-Bridge-Router/
-│── docs/ # Final report, user manual, deployment guide
-│ └── Final_Report.pdf
-│── src/
-│ ├── cgi-bin/ # Bash CGI scripts
-│ ├── www/ # HTML, CSS, JS frontend
-│ └── configs/ # OpenWrt, firewall, VPN configs
-│── README.md # Project overview (this file)
-│── LICENSE # Open-source license
+## Quick Start
+
+**Access the Web Dashboard**
+
+* Wi-Fi: `MY Wi-Fi`
+* Browser: `http://70.70.70.1/main.html`
+* Login: `root` / `tonystark`
+
+**Default Wi-Fi**: Main `MY Wi-Fi`, Guest `Guest Wi-Fi` (disabled by default)
 
 ---
 
-## 🔧 Installation & Setup  
-1. Flash **OpenWrt** on Raspberry Pi 4.  
-2. Set LAN IP (e.g., `70.70.70.1`).  
-3. Copy CGI scripts to `/www/cgi-bin/`.  
-4. Copy frontend files to `/www/`.  
-5. Install & configure:  
-   - **AdGuardHome** (edit `dnsmasq` settings)  
-   - **OpenVPN** with `.conf` and `.auth` files  
-6. Access the router dashboard in your browser:  
-http://70.70.70.1/main.html
+## Web Interface Pages
+
+| Page      | Purpose                               |
+| --------- | ------------------------------------- |
+| Login     | Secure authentication                 |
+| Dashboard | System overview and device management |
+| VPN       | VPN server selection and logs         |
+| AdGuard   | DNS filtering and parental controls   |
+| Guest     | Guest network management              |
+| Settings  | Advanced configuration                |
 
 ---
 
-## 📘 Documentation  
-- 📑 [Final Report](docs/Final_Report.pdf)  
-- 📖 [User Manual](docs/User_Manual.pdf)  
-- ⚙️ [Deployment & Configuration Manual](docs/Deployment_Guide.pdf)  
+## Use Cases
+
+* Home users: secure and controlled home networks
+* Travelers: safe public Wi-Fi access
+* Families: parental controls and safe browsing
+* Gamers: QoS and VPN for reduced latency
+* Small businesses: guest network and device management
+* Students: learn networking and OpenWrt
 
 ---
 
-## 👨‍💻 Authors  
-- **Yousef R. Younis** – 22230294  
-- **Moayad K. Salloum** – 22230296  
+## System Requirements
 
-Supervised by: **Dr. Abdel-Mehsen Ahmad**  
+**Hardware**
+
+* Raspberry Pi 4, 4GB+ RAM
+* MicroSD 32GB+
+* USB Wi-Fi adapter + Ethernet
+
+**Software**
+
+* OpenWrt 21.02+
+* AdGuard Home, OpenVPN, uhttpd
+* Modern browser (Chrome, Firefox, Safari)
 
 ---
 
-## 📜 License  
-This project is licensed under the **MIT License** – see [LICENSE](LICENSE) for details.  
+## Documentation
+
+For advanced setup, scripts, and configuration details, see:
+`docs/Implementation_Details.md`
+
+Other docs:
+
+* `docs/Final_Report.pdf` – Full project report
+* `docs/User_Manual.md` – Step-by-step user guide
+* `docs/Deployment_Guide.md` – Installation instructions
 
 ---
 
-## ⭐ Acknowledgments  
-- **OpenWrt Community** for firmware and support  
-- **AdGuard & OpenVPN** open-source tools  
-- **Lebanese International University (LIU)**, School of Engineering  
+## Troubleshooting
+
+**Common issues**
+
+* Can't access dashboard → check Wi-Fi or `http://70.70.70.1`
+* No internet → use “Repair Wi-Fi” in Settings
+* VPN not connecting → verify server credentials
+* Device not blocked → check MAC address and firewall rules
+
+---
+
+## License
+
+MIT License – see `LICENSE`
+
+---
+
+## Authors
+
+**Moayad K. Salloum** – @Moayad717
+**Yousef R. Younis** – @yousef.r.younis
+
+*Lebanese International University – Spring 2024–2025*
+
+
