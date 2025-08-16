@@ -2,8 +2,12 @@
 
 An **OpenWrt-based smart travel router** built on a Raspberry Pi 4, providing **VPN, AdGuard, firewall management, device monitoring, and real-time statistics** through a **custom web dashboard**.  
 
-This project was developed as a **Senior Project** at the **Lebanese International University (LIU), School of Engineering**.  
+This project was developed as a **Senior Project** at the **Lebanese International University (LIU), School of Engineering** under the supervision of Dr. Abdel-Mehsen Ahmad.  
 
+## Authors
+
+**Moayad K. Salloum** – @Moayad717
+**Yousef R. Younis** – @yousef.r.younis
 ---
 
 ## Key Features
@@ -117,11 +121,6 @@ Other docs:
 MIT License – see `LICENSE`
 
 ---
-
-## Authors
-
-**Moayad K. Salloum** – @Moayad717
-**Yousef R. Younis** – @yousef.r.younis
 
 *Lebanese International University – Spring 2024–2025*
 
