@@ -1,0 +1,3795 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style"="black-translucent">
+    <title>AdGuard</title>
+    <style>
+        /* Root variables and base styles */
+        :root {
+            --bg-light: #E8F4F8;
+            --bg-dark: #000000;
+            --accent-light: #0B3D91;
+            --accent-dark: #00E5B9;
+            --gradient-light: linear-gradient(45deg, #2196F3, #E91E63);
+            --gradient-dark: linear-gradient(45deg, #00E5B9, #8A2BE2);
+            --card-light: #FFFFFF;
+            --card-dark: #1A1A1A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .back-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .back-button i {
+            color: white;
+            font-size: 20px;
+        }
+
+        body.light-mode .back-button {
+            background: var(--gradient-light);
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            background: var(--gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            background: var(--gradient-dark);
+            filter: blur(15px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: glowPulse 3s infinite;
+        }
+
+        body.light-mode .title {
+            background: var(--gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode .title::after {
+            background: var(--gradient-light);
+        }
+
+        .theme-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle i {
+            color: white;
+            font-size: 20px;
+            transition: transform 0.5s ease;
+        }
+
+        body.light-mode .theme-toggle {
+            background: var(--gradient-light);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 5;
+            }
+        }
+
+        @keyframes rotateIcon {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            .theme-toggle,
+            .back-button {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Add these styles if not already present */
+        .network-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: var(--card-dark);
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        body.light-mode .network-card {
+            background: var(--card-light);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .network-card.enabled {
+            background: linear-gradient(45deg, #4338CA, #00E5B9);
+            box-shadow: 0 4px 15px rgba(67, 56, 202, 0.3);
+            color: white;
+        }
+
+        body.light-mode .network-card.enabled {
+            background: linear-gradient(45deg, #2196F3, #E91E63);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            color: white;
+        }
+
+        .network-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .network-toggle {
+            width: 60px;
+            height: 30px;
+            background: #444;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .network-toggle.enabled {
+            background: linear-gradient(45deg, #2196F3, #E91E63);
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .network-toggle.enabled {
+            background: linear-gradient(45deg, #4338CA, #00E5B9);
+            box-shadow: 0 0 15px rgba(67, 56, 202, 0.4);
+            animation: toggleGlow 2s infinite;
+        }
+
+        .network-toggle::before {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .network-toggle.enabled::before {
+            transform: translateX(30px);
+        }
+
+        .network-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .network-details.visible {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 15px;
+        }
+
+        /* Add to your existing styles */
+        .quick-stats {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--card-dark);
+            border-radius: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        body.light-mode .quick-stats {
+            background: var(--card-light);
+        }
+
+        .stats-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        body.light-mode .stats-title {
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-block {
+            position: relative;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        body.light-mode .stat-block {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 1;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-icon i {
+            font-size: 1.2rem;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        body.light-mode .stat-label {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        body.light-mode .stat-value {
+            color: #333;
+        }
+
+        /* Hover effects */
+        .stat-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive design */
+        @media screen and (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation for value updates */
+        @keyframes numberUpdate {
+            0% {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stat-value.updating {
+            animation: numberUpdate 0.3s ease-out;
+        }
+
+        .lists-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .list-section {
+            background: var(--card-dark);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .list-section {
+            background: var(--card-light);
+        }
+
+        .allow-list {
+            border: 2px solid #4CAF50;
+        }
+
+        .block-list {
+            border: 2px solid #F44336;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .list-header h2 {
+            font-size: 1.2rem;
+            background: var(--gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.light-mode .list-header h2 {
+            background: var(--gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .add-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .allow-list .add-button {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .block-list .add-button {
+            background: #F44336;
+            color: white;
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .domains-list {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .domain-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .domain-item .remove-button {
+            background: none;
+            border: none;
+            color: #FF5252;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .domain-item .remove-button:hover {
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .modal-content {
+            background: var(--card-light);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: #FF5252;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        .modal-body input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        body.light-mode .modal-body input {
+            border-color: rgba(0, 0, 0, 0.1);
+            background: white;
+            color: #333;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        #allowListModal .submit-button {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #blockListModal .submit-button {
+            background: #F44336;
+            color: white;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @media screen and (max-width: 768px) {
+            .lists-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Add inside your <style> tag */
+
+        .query-log {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--card-dark);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        body.light-mode .query-log {
+            background: var(--card-light);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+        }
+
+        .log-header .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .log-header .toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .query-log.expanded .log-header .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .log-title {
+            font-size: 1.25rem;
+            color: white;
+            background: var(--gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.light-mode .log-title {
+            background: var(--gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .log-filter-btn,
+        .log-refresh-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        body.light-mode .log-filter-btn,
+        body.light-mode .log-refresh-btn {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .log-filter-btn:hover,
+        .log-refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            max-height: 0;
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .query-log.expanded .log-table-container {
+            max-height: 500px;
+            transition: max-height 0.3s ease-in;
+        }
+
+        body.light-mode .log-table-container {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: white;
+            margin: 1rem 0;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .log-table {
+            color: #333;
+        }
+
+        body.light-mode .log-table th,
+        body.light-mode .log-table td {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .log-table thead th {
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        body.light-mode .log-table thead th {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .log-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+        .log-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .log-table tbody tr:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .log-table td {
+            font-size: 0.95rem;
+        }
+
+        /* Column specific styles */
+        .log-table th:first-child,
+        .log-table td:first-child {
+            padding-left: 20px;
+        }
+
+        .log-table th:last-child,
+        .log-table td:last-child {
+            padding-right: 20px;
+        }
+
+        /* Status colors */
+        .status-blocked {
+            color: #F44336;
+            font-weight: 500;
+        }
+
+        .status-allowed {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        /* Table container modifications */
+        .log-table-container {
+            margin: 0 -1.5rem;
+            padding: 0 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        /* Scrollbar styling */
+        .log-table-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .log-table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .log-table-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        body.light-mode .log-table-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive table */
+        @media screen and (max-width: 768px) {
+            .log-table {
+                font-size: 0.9rem;
+            }
+
+            .log-table th,
+            .log-table td {
+                padding: 10px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .log-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .log-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        .stats-graphs {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--card-dark);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .stats-graphs {
+            background: var(--card-light);
+        }
+
+        .graphs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .graph-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 300px;
+        }
+
+        body.light-mode .graph-card {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .graph-card:last-child {
+            grid-column: span 2;
+        }
+
+        .graph-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        body.light-mode .graph-card h3 {
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 85%;
+            width: 100%;
+        }
+
+        @media screen and (max-width: 768px) {
+            .graphs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .graph-card:last-child {
+                grid-column: span 1;
+            }
+        }
+
+        /* Add to your existing CSS */
+        @media screen and (max-width: 768px) {
+
+            /* Container adjustments */
+            .container {
+                padding: 0 15px;
+            }
+
+            /* Header adjustments */
+            .header {
+                padding: 15px 0;
+            }
+
+            .title {
+                font-size: 22px;
+            }
+
+            /* Stats grid adjustments */
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .stat-block {
+                padding: 0.75rem;
+            }
+
+            .stat-icon {
+                width: 35px;
+                height: 35px;
+            }
+
+            /* Lists container adjustments */
+            .lists-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            /* Graph adjustments */
+            .graphs-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .graph-card {
+                height: 250px;
+                padding: 1rem;
+            }
+
+            .graph-card:last-child {
+                grid-column: span 1;
+            }
+
+            /* Query log adjustments */
+            .log-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .log-controls {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .log-table {
+                font-size: 0.85rem;
+            }
+
+            .log-table th,
+            .log-table td {
+                padding: 8px;
+            }
+
+            /* Table scrolling for small screens */
+            .log-table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .log-table {
+                min-width: 600px;
+            }
+        }
+
+        /* Even smaller screens */
+        @media screen and (max-width: 480px) {
+            .title {
+                font-size: 20px;
+            }
+
+            .stat-block {
+                padding: 0.5rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .graph-card {
+                height: 200px;
+            }
+
+            .list-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Modal adjustments */
+            .modal-content {
+                padding: 1rem;
+                margin: 0 10px;
+            }
+
+            .modal-header h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Landscape orientation fixes */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            .graph-card {
+                height: 180px;
+            }
+
+            .stats-grid,
+            .graphs-grid,
+            .lists-container {
+                gap: 0.5rem;
+            }
+
+            .modal-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Add inside your <style> tag */
+        .filtering-rules {
+            margin-top: 2rem;
+        }
+
+        .rules-list {
+            border: 2px solid #2196F3 !important;
+        }
+
+        .rules-info {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        body.light-mode .rules-info {
+            color: rgba(0, 0, 0, 0.7);
+            background: rgba(33, 150, 243, 0.05);
+        }
+
+        .rules-info i {
+            color: #2196F3;
+        }
+
+        .rule-type {
+            margin: 1rem 0;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .rule-type label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .rule-type input[type="radio"] {
+            accent-color: #2196F3;
+        }
+
+        .domain-item.blocking-rule {
+            border-left: 3px solid #F44336;
+        }
+
+        .domain-item.allowing-rule {
+            border-left: 3px solid #4CAF50;
+        }
+
+        /* Add these styles to your existing CSS */
+        .rule-type {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .rule-type label {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .rule-type label {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .rule-type label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .rule-type input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            margin: 0;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .rule-type input[type="radio"] {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .rule-type input[type="radio"]:checked {
+            border-width: 6px;
+        }
+
+        .rule-type input[type="radio"][value="block"] {
+            border-color: #F44336;
+        }
+
+        .rule-type input[type="radio"][value="allow"] {
+            border-color: #4CAF50;
+        }
+
+        .rule-type label i {
+            font-size: 1.1rem;
+        }
+
+        .rule-type label[for*="block"] i {
+            color: #F44336;
+        }
+
+        .rule-type label[for*="allow"] i {
+            color: #4CAF50;
+        }
+
+        /* Enhanced Filter Select Styling */
+        .rule-filter {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+            margin-right: 1rem;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 140px;
+            position: relative;
+            transition: all 0.3s ease;
+            background-image: linear-gradient(45deg, var(--accent-dark), #4338CA);
+        }
+
+        body.light-mode .rule-filter {
+            border-color: rgba(0, 0, 0, 0.1);
+            background-image: linear-gradient(45deg, #2196F3, #E91E63);
+        }
+
+        .rule-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .rule-filter option {
+            background: var(--card-dark);
+            color: white;
+            padding: 10px;
+        }
+
+        body.light-mode .rule-filter option {
+            background: var(--card-light);
+            color: #333;
+        }
+
+        /* Add inside your existing <style> tag */
+        .parental-controls {
+            margin-top: 2rem;
+        }
+
+        .parental-list {
+            border: 2px solid #9C27B0 !important;
+        }
+
+        .wide-modal .modal-content {
+            max-width: 700px;
+            max-height: 80vh;
+        }
+
+        .parental-form {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .device-selector {
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+
+        .website-tags {
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .device-chip {
+            padding: 0.75rem 1rem;  /* Increased padding */
+            margin-bottom: 0.5rem;  /* Added margin between chips */
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;  /* Increased gap between icon and text */
+        }
+
+        .device-chip.selected {
+            background: var(--gradient-dark);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .device-chip:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .website-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .add-website-btn {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--gradient-dark);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .website-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            min-height: 40px;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .website-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .website-tag .remove-tag {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .website-tag .remove-tag:hover {
+            opacity: 1;
+        }
+
+        .weekday-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .weekday-btn {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .weekday-btn.selected {
+            background: var(--gradient-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-picker {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .time-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .time-input input {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+        }
+
+        .gradient-button {
+            background: var(--gradient-dark);
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gradient-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .rule-mac {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0 0.5rem;
+        }
+
+        body.light-mode .rule-mac {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .rule-ip {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.light-mode .rule-ip {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Add to your existing CSS */
+        .restrict-list {
+            border: 2px solid #FF9800 !important;
+        }
+
+        .time-picker-container {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .time-input-group label {
+            font-size: 1rem;
+            color: inherit;
+        }
+
+        .time-input {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+            font-size: 1.1rem;
+            min-width: 120px;
+        }
+
+        body.light-mode .time-input {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        @media screen and (max-width: 768px) {
+            .time-picker-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        .restriction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .restriction-item .remove-button {
+            background: none;
+            border: none;
+            color: #FF5252;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .restriction-item .remove-button:hover {
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        .restriction-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .restriction-time {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            background: rgba(255, 152, 0, 0.1);
+            color: #FF9800;
+            font-size: 0.9rem;
+        }
+
+        @media screen and (max-width: 768px) {
+            .time-picker-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .clock-face {
+                width: 150px;
+                height: 150px;
+            }
+
+            .hours span {
+                transform-origin: center 75px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Add after your existing section margins, before .restrict-list */
+        .restrict-access {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Update existing .restrict-list style to match other sections */
+        .restrict-list {
+            border: 2px solid #FF9800 !important;
+        }
+
+        /* Update your existing .time-picker-container style to include proper spacing */
+        .time-picker-container {
+            margin-top: 1rem;
+        }
+
+        /* Add this CSS to your existing styles */
+        .section-header {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header .title {
+            font-size: 24px;
+            font-weight: bold;
+            background: var(--gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .section-header .title::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            background: var(--gradient-dark);
+            filter: blur(15px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: glowPulse 3s infinite;
+        }
+
+        body.light-mode .section-header {
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .section-header .title {
+            background: var(--gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode .section-header .title::after {
+            background: var(--gradient-light);
+        }
+
+        .domain-item .device-name {
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .domain-item .rule-domain {
+            color: #2196F3;
+            margin: 0 0.5rem;
+        }
+
+        .info-message {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            color: #2196F3;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 8px;
+        }
+
+        .error-message {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            color: #F44336;
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: 8px;
+        }
+
+        .domain-item .restriction-time {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            background: rgba(156, 39, 176, 0.1);
+            color: #9C27B0;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        /* Add these responsive styles after your existing CSS */
+
+        @media screen and (max-width: 768px) {
+            /* Container adjustments */
+            .container {
+                padding: 0 15px;
+            }
+
+            /* Header adjustments */
+            .header {
+                padding: 15px 0;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .title {
+                font-size: 22px;
+            }
+
+            .back-button,
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+            }
+
+            /* Quick stats grid */
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            /* Traffic stats adjustments */
+            .traffic-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .traffic-card {
+                padding: 1rem;
+            }
+
+            /* Rules sections adjustments */
+            .parental-list,
+            .rules-list,
+            .restrict-list {
+                padding: 1rem;
+            }
+
+            .list-header {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: stretch;
+            }
+
+            .list-header h2 {
+                font-size: 1.1rem;
+            }
+
+            .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Modal adjustments */
+            .modal-content {
+                padding: 1rem;
+                margin: 0 10px;
+                max-width: calc(100% - 20px);
+            }
+
+            .modal-header h3 {
+                font-size: 1.1rem;
+            }
+
+            /* Device selector adjustments */
+            .device-selector {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .device-chip {
+                flex: 1;
+                min-width: calc(50% - 0.5rem);
+                justify-content: center;
+            }
+
+            /* Time picker adjustments */
+            .time-picker {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .time-input {
+                width: 100%;
+            }
+
+            /* Domain items adjustments */
+            .domain-item {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .rule-info {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .restriction-time {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Even smaller screens */
+        @media screen and (max-width: 480px) {
+            .title {
+                font-size: 20px;
+            }
+
+            .stat-block {
+                padding: 0.5rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .website-tags {
+                padding: 0.25rem;
+            }
+
+            .website-tag {
+                font-size: 0.9rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .weekday-selector {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .weekday-btn {
+                flex: 1;
+                min-width: calc(25% - 0.5rem);
+                padding: 0.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Landscape orientation fixes */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            .modal-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .device-selector {
+                max-height: 120px;
+                overflow-y: auto;
+            }
+
+            .website-tags {
+                max-height: 80px;
+                overflow-y: auto;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) {
+            .remove-button:active,
+            .add-button:active,
+            .submit-button:active {
+                transform: scale(0.95);
+            }
+
+            .device-chip:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Improved tap targets for mobile */
+        .remove-button,
+        .add-button,
+        .close-button {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Smoother scrolling on mobile */
+        .devices-list,
+        .website-tags,
+        .modal-content {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        
+
+        .success-message {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        .success-message i {
+            font-size: 1.2rem;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body style="visibility: hidden;">
+
+    <script>
+        (function checkAuth() {
+    try {
+        // Check if user is authenticated
+        const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+        const username = localStorage.getItem('username');
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        // Debug logging
+        console.log('Auth check:', { isAuthenticated, username, lastActivity });
+        
+        // Check for session timeout
+        if (lastActivity && (currentTime - parseInt(lastActivity) > 20 * 60 * 1000)) {
+            console.log('Session expired');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // If not authenticated or wrong username, redirect to login
+        if (!isAuthenticated || username !== 'root') {
+            console.log('Not authenticated, redirecting to login');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // Update last activity time
+        localStorage.setItem('lastActivity', currentTime.toString());
+        
+        // If authenticated, show settings page
+        document.body.style.visibility = 'visible';
+        console.log('Authentication successful');
+        
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.clear();
+        window.location.replace('main.html');
+    }
+})();
+
+// Session timeout handler
+const sessionManager = {
+    timeout: 20 * 60 * 1000, // 20 minutes in milliseconds
+    activityTimer: null,
+    
+    initialize() {
+        // Check if session has expired
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        if (lastActivity && (currentTime - parseInt(lastActivity) > this.timeout)) {
+            this.endSession('Session expired. Please login again.');
+            return;
+        }
+        
+        // Update last activity time
+        this.updateActivityTime();
+        
+        // Add event listeners for user activity
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, () => this.updateActivityTime());
+        });
+        
+        // Start the timer
+        this.startActivityTimer();
+    },
+    
+    updateActivityTime() {
+        localStorage.setItem('lastActivity', Date.now().toString());
+        
+        // Reset the timer
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+        }
+        this.startActivityTimer();
+    },
+    
+    startActivityTimer() {
+        this.activityTimer = setTimeout(() => {
+            this.endSession('Session timed out due to inactivity.');
+        }, this.timeout);
+    },
+    
+    endSession(message) {
+        // Clear all session data
+        localStorage.clear();
+        
+        // Show message to user
+        alert(message);
+        
+        // Redirect to login
+        window.location.replace('main.html');
+    }
+};
+
+// Initialize session management
+sessionManager.initialize();
+    </script>
+
+    <div class="container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='dashboard.html'">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="title">AdGuard</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-sun"></i>
+            </button>
+        </header>
+        <!-- Add after the header section -->
+        <div class="network-card">
+            <div class="network-header">
+                <h2 class="network-title">AdGuard Protection</h2>
+                <div class="network-toggle" id="adguardToggle"></div>
+            </div>
+        </div>
+        <!-- Add after the network-card section -->
+        <section class="quick-stats">
+            <h2 class="stats-title">AdGuard Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-block stat-queries">
+                    <div class="stat-content">
+                        <span class="stat-icon">
+                            <i class="fas fa-chart-line" style="color: #4CAF50"></i>
+                        </span>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Queries</span>
+                            <span class="stat-value" id="totalQueries">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-block stat-blocked">
+                    <div class="stat-content">
+                        <span class="stat-icon">
+                            <i class="fas fa-shield-alt" style="color: #F44336"></i>
+                        </span>
+                        <div class="stat-info">
+                            <span class="stat-label">Blocked Queries</span>
+                            <span class="stat-value" id="blockedQueries">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-block stat-adult">
+                    <div class="stat-content">
+                        <span class="stat-icon">
+                            <i class="fas fa-user-shield" style="color: #FF9800"></i>
+                        </span>
+                        <div class="stat-info">
+                            <span class="stat-label">Adult Content Blocked</span>
+                            <span class="stat-value" id="adultQueries">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-block stat-percent">
+                    <div class="stat-content">
+                        <span class="stat-icon">
+                            <i class="fas fa-percentage" style="color: #2196F3"></i>
+                        </span>
+                        <div class="stat-info">
+                            <span class="stat-label">Block Rate</span>
+                            <span class="stat-value" id="blockRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Add the stats-graphs section -->
+        <section class="stats-graphs">
+            <div class="graphs-grid">
+                <div class="graph-card">
+                    <h3>Queries Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="queriesChart"></canvas>
+                    </div>
+                </div>
+                <div class="graph-card">
+                    <h3>Blocked vs Allowed</h3>
+                    <div class="chart-container">
+                        <canvas id="blockRatioChart"></canvas>
+                    </div>
+                </div>
+                <div class="graph-card">
+                    <h3>Top Queried Domains</h3>
+                    <div class="chart-container">
+                        <canvas id="topDomainsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Add after the stats-graphs section and before filtering-rules section -->
+        <div class="section-header">
+            <h1 class="title">Parental Controls</h1>
+        </div>
+        <!-- Add the lists-container section -->
+
+
+        <!-- Add after the lists-container section -->
+        <section class="filtering-rules">
+            <div class="list-section rules-list">
+                <div class="list-header">
+                    <h2>Custom Filtering Rules</h2>
+                    <button class="add-button" id="addRuleButton">
+                        <i class="fas fa-plus"></i>
+                        Add Rule
+                    </button>
+                </div>
+                <div class="rules-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Choose if you want to add or block a domain and write its URL. (e.g., example.com)</span>
+                </div>
+                <div class="domains-list" id="rulesList">
+                    <!-- Rules will be added here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Add after the filtering-rules section and before parental-controls section -->
+        <section class="restrict-access">
+            <div class="list-section restrict-list">
+                <div class="list-header">
+                    <h2>Time Restriction Rules</h2>
+                    <button class="add-button" id="addRestrictionButton">
+                        <i class="fas fa-plus"></i>
+                        Add Restriction
+                    </button>
+                </div>
+                <div class="rules-info">
+                    <i class="fas fa-clock"></i>
+                    <span>Block internet access for selected devices during specific time periods</span>
+                </div>
+                <div class="domains-list" id="restrictionsList">
+                    <!-- Restrictions will be added here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Add after the filtering-rules section -->
+        <section class="parental-controls">
+            <div class="list-section parental-list">
+                <div class="list-header">
+                    <h2>Scheduled Access Control Rules</h2>
+                    <button class="add-button" id="addParentalRule">
+                        <i class="fas fa-plus"></i>
+                        Add Rule
+                    </button>
+                </div>
+                <div class="rules-info">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Set up website restrictions and schedules for specific devices</span>
+                </div>
+                <div class="parental-rules-list" id="parentalRulesList">
+                    <!-- Rules will be added here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Modals -->
+
+
+        <!-- Replace the existing filterRuleModal div -->
+        <div class="modal" id="filterRuleModal">
+            <div class="modal-content wide-modal">
+                <div class="modal-header">
+                    <h3>Add Custom Filter Rule</h3>
+                    <button class="close-button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Select Device</label>
+                        <div class="device-selector" id="filterRuleDevices">
+                            <!-- Devices will be populated here -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Domain</label>
+                        <input type="text" id="filterRule" placeholder="Enter domain (e.g., example.com)">
+                    </div>
+                    <div class="rule-type">
+                        <label>
+                            <input type="radio" name="ruleType" value="block" checked>
+                            <i class="fas fa-ban"></i>
+                            Blocking Rule
+                        </label>
+                        <label>
+                            <input type="radio" name="ruleType" value="allow">
+                            <i class="fas fa-check-circle"></i>
+                            Allowing Rule
+                        </label>
+                    </div>
+                    <button class="submit-button" id="submitFilterRule">
+                        <i class="fas fa-check"></i>
+                        Add Rule
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add the parental control modal -->
+        <div class="modal" id="parentalModal">
+            <div class="modal-content wide-modal">
+                <div class="modal-header">
+                    <h3>Create Parental Control Rule</h3>
+                    <button class="close-button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="parental-form">
+                        <div class="form-group">
+                            <label>Rule Name</label>
+                            <input type="text" id="ruleName" placeholder="e.g., Kids Devices">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Select Devices</label>
+                            <div class="device-selector" id="deviceSelector">
+                                <!-- Devices will be populated here -->
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Website Restrictions</label>
+                            <div class="website-input-group">
+                                <input type="text" id="websiteInput" placeholder="Enter website (e.g., example.com)">
+                                <button class="add-website-btn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="website-tags" id="websiteTags">
+                                <!-- Selected websites will appear here as tags -->
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Time Restrictions</label>
+                            <div class="time-restrictions">
+                                <div class="time-picker">
+                                    <div class="time-input">
+                                        <label>From</label>
+                                        <input type="time" id="timeFrom">
+                                    </div>
+                                    <div class="time-input">
+                                        <label>To</label>
+                                        <input type="time" id="timeTo">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-button gradient-button" id="saveParentalRule">
+                        <i class="fas fa-save"></i>
+                        Save Rule
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add this modal to your existing modals section -->
+        <div class="modal" id="restrictionModal">
+            <div class="modal-content wide-modal">
+                <div class="modal-header">
+                    <h3>Add Internet Restriction</h3>
+                    <button class="close-button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Select Device</label>
+                        <div class="device-selector" id="restrictionDevices">
+                            <!-- Devices will be populated here -->
+                        </div>
+                    </div>
+                    <!-- Replace the existing time picker in the restrictionModal with this simpler version -->
+                    <div class="form-group">
+                        <label>Restriction Period</label>
+                        <div class="time-picker-container">
+                            <div class="time-input-group">
+                                <label>From</label>
+                                <input type="time" id="startTime" class="time-input">
+                            </div>
+                            <div class="time-input-group">
+                                <label>To</label>
+                                <input type="time" id="endTime" class="time-input">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-button" id="submitRestriction">
+                        <i class="fas fa-check"></i>
+                        Add Restriction
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add the query-log section -->
+        <section class="query-log">
+            <div class="log-header" id="logHeader">
+                <div class="header-left">
+                    <h2 class="log-title">DNS Query Log</h2>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="log-controls">
+                    <button class="log-filter-btn" id="filterLog">
+                        <i class="fas fa-filter"></i>
+                        Filter
+                    </button>
+                    <button class="log-refresh-btn" id="refreshLog">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="log-table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Domain</th>
+                            <th>Client</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="queryLogBody">
+                        <!-- Log entries will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <!-- Rest of your content will go here -->
+    </div>
+
+    <script>
+        // Theme Management
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                document.body.classList.remove('light-mode');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            themeIcon.style.animation = 'rotateIcon 0.5s ease-in-out';
+
+            document.body.classList.toggle('light-mode');
+
+            if (document.body.classList.contains('light-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'dark');
+            }
+
+            setTimeout(() => {
+                themeIcon.style.animation = '';
+            }, 500);
+        });
+
+        document.addEventListener('DOMContentLoaded', initializeTheme);
+
+        // AdGuard Toggle Functionality
+        const adguardToggle = document.getElementById('adguardToggle');
+        const adguardCard = document.querySelector('.network-card');
+        const adguardDetails = document.getElementById('adguardDetails');
+        const statusValue = document.getElementById('statusValue');
+        const blockedCount = document.getElementById('blockedCount');
+
+        const adguardController = {
+            initialize() {
+                // Initial fetch of status
+                this.fetchStatus();
+
+                // Add click event listener
+                adguardToggle.addEventListener('click', () => {
+                    const newState = !adguardToggle.classList.contains('enabled');
+                    this.toggleAdGuard(newState);
+                });
+
+                // Refresh status every 30 seconds
+                setInterval(() => this.fetchStatus(), 30000);
+            },
+
+            fetchStatus() {
+                fetch('/cgi-bin/adguard-status')
+                    .then(response => response.text())
+                    .then(data => {
+                        const status = data.trim().split('=')[1];
+                        this.updateUI(status === 'enabled');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching AdGuard status:', error);
+                    });
+            },
+
+            toggleAdGuard(enable) {
+                const action = enable ? 'enable' : 'disable';
+
+                fetch(`/cgi-bin/adguard-status?action=${action}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        const result = data.trim().split('=')[1];
+                        if (result === 'enabled' || result === 'disabled') {
+                            this.updateUI(result === 'enabled');
+                        } else {
+                            console.error('Failed to change status:', data);
+                            this.fetchStatus(); // Revert to actual status
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error changing AdGuard status:', error);
+                        this.fetchStatus(); // Revert to actual status
+                    });
+            },
+
+            updateUI(enabled) {
+                // Update toggle button
+                adguardToggle.classList.toggle('enabled', enabled);
+                // Update card appearance
+                adguardCard.classList.toggle('enabled', enabled);
+                // Update details section if it exists
+                if (adguardDetails) {
+                    adguardDetails.classList.toggle('visible', enabled);
+                }
+                // Update status text if it exists
+                if (statusValue) {
+                    statusValue.textContent = enabled ? 'Active' : 'Inactive';
+                }
+            }
+        };
+
+        // Initialize when document is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            adguardController.initialize();
+        });
+
+        // Replace the adguardStats object with this updated version
+        const adguardStats = {
+            elements: {
+                totalQueries: document.getElementById('totalQueries'),
+                blockedQueries: document.getElementById('blockedQueries'),
+                adultQueries: document.getElementById('adultQueries'),
+                blockRate: document.getElementById('blockRate')
+            },
+
+            updateStats() {
+                fetch('/cgi-bin/adguard-stats')
+                    .then(response => response.text())
+                    .then(data => {
+                        // Parse the response
+                        const lines = data.split('\n');
+                        const stats = {};
+
+                        // Process stats lines
+                        lines.forEach(line => {
+                            if (line.includes('=')) {
+                                const [key, value] = line.split('=');
+                                stats[key] = value;
+                            }
+                        });
+
+                        // Update UI with real values
+                        this.animateValue(this.elements.totalQueries, parseInt(stats.total_queries || 0));
+                        this.animateValue(this.elements.blockedQueries, parseInt(stats.blocked_queries || 0));
+                        this.animateValue(this.elements.adultQueries, parseInt(stats.adult_blocked || 0));
+                        this.animateValue(this.elements.blockRate, parseFloat(stats.blocked_percentage || 0), '%');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching AdGuard stats:', error);
+                    });
+            },
+
+            animateValue(element, value, suffix = '') {
+                element.classList.add('updating');
+                element.textContent = value.toLocaleString() + suffix;
+                setTimeout(() => element.classList.remove('updating'), 300);
+            },
+
+            initialize() {
+                this.updateStats();
+                // Update stats every 30 seconds
+                setInterval(() => this.updateStats(), 30000);
+            }
+        };
+
+        // Initialize AdGuard stats
+        document.addEventListener('DOMContentLoaded', () => {
+            adguardStats.initialize();
+        });
+
+        // Lists Management
+        const listManagement = {
+            elements: {
+                allowModal: document.getElementById('allowListModal'),
+                blockModal: document.getElementById('blockListModal'),
+                allowList: document.getElementById('allowList'),
+                blockList: document.getElementById('blockList'),
+                addAllowButton: document.getElementById('addAllowButton'),
+                addBlockButton: document.getElementById('addBlockButton'),
+                submitAllowButton: document.getElementById('submitAllowDomain'),
+                submitBlockButton: document.getElementById('submitBlockDomain'),
+                allowInput: document.getElementById('allowDomain'),
+                blockInput: document.getElementById('blockDomain')
+            },
+
+            initialize() {
+                // Add event listeners
+                this.elements.addAllowButton.addEventListener('click', () => this.showModal('allow'));
+                this.elements.addBlockButton.addEventListener('click', () => this.showModal('block'));
+
+                // Close buttons
+                document.querySelectorAll('.close-button').forEach(button => {
+                    button.addEventListener('click', () => this.hideModals());
+                });
+
+                // Submit buttons
+                this.elements.submitAllowButton.addEventListener('click', () => this.addDomain('allow'));
+                this.elements.submitBlockButton.addEventListener('click', () => this.addDomain('block'));
+
+                // Close modal when clicking outside
+                window.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        this.hideModals();
+                    }
+                });
+
+                // Load initial lists
+                this.loadLists();
+            },
+
+            showModal(type) {
+                const modal = type === 'allow' ? this.elements.allowModal : this.elements.blockModal;
+                modal.classList.add('active');
+                const input = type === 'allow' ? this.elements.allowInput : this.elements.blockInput;
+                input.focus();
+            },
+
+            hideModals() {
+                this.elements.allowModal.classList.remove('active');
+                this.elements.blockModal.classList.remove('active');
+                this.elements.allowInput.value = '';
+                this.elements.blockInput.value = '';
+            },
+
+            addDomain(type) {
+                const input = type === 'allow' ? this.elements.allowInput : this.elements.blockInput;
+                const domain = input.value.trim();
+
+                if (!domain) {
+                    alert('Please enter a domain');
+                    return;
+                }
+
+                const list = type === 'allow' ? this.elements.allowList : this.elements.blockList;
+                const domainItem = document.createElement('div');
+                domainItem.className = 'domain-item';
+                domainItem.innerHTML = `
+                    <span>${domain}</span>
+                    <button class="remove-button" onclick="listManagement.removeDomain(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+
+                list.appendChild(domainItem);
+                this.hideModals();
+                this.saveLists();
+            },
+
+            removeDomain(button) {
+                button.closest('.domain-item').remove();
+                this.saveLists();
+            },
+
+            saveLists() {
+                const allowDomains = Array.from(this.elements.allowList.children).map(item =>
+                    item.querySelector('span').textContent
+                );
+                const blockDomains = Array.from(this.elements.blockList.children).map(item =>
+                    item.querySelector('span').textContent
+                );
+
+                localStorage.setItem('allowList', JSON.stringify(allowDomains));
+                localStorage.setItem('blockList', JSON.stringify(blockDomains));
+            },
+
+            loadLists() {
+                const allowDomains = JSON.parse(localStorage.getItem('allowList') || '[]');
+                const blockDomains = JSON.parse(localStorage.getItem('blockList') || '[]');
+
+                allowDomains.forEach(domain => {
+                    const domainItem = document.createElement('div');
+                    domainItem.className = 'domain-item';
+                    domainItem.innerHTML = `
+                        <span>${domain}</span>
+                        <button class="remove-button" onclick="listManagement.removeDomain(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    this.elements.allowList.appendChild(domainItem);
+                });
+
+                blockDomains.forEach(domain => {
+                    const domainItem = document.createElement('div');
+                    domainItem.className = 'domain-item';
+                    domainItem.innerHTML = `
+                        <span>${domain}</span>
+                        <button class="remove-button" onclick="listManagement.removeDomain(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    this.elements.blockList.appendChild(domainItem);
+                });
+            }
+        };
+
+        // Initialize list management
+        document.addEventListener('DOMContentLoaded', () => {
+            listManagement.initialize();
+        });
+
+        // Replace the queryLog object with this updated version
+        const queryLog = {
+            elements: {
+                container: document.querySelector('.query-log'),
+                logHeader: document.getElementById('logHeader'),
+                logBody: document.getElementById('queryLogBody'),
+                filterBtn: document.getElementById('filterLog'),
+                refreshBtn: document.getElementById('refreshLog')
+            },
+
+            isExpanded: false,
+
+            toggleLog() {
+                this.isExpanded = !this.isExpanded;
+                this.elements.container.classList.toggle('expanded', this.isExpanded);
+                localStorage.setItem('queryLogExpanded', this.isExpanded);
+            },
+
+            fetchQueries() {
+                fetch('/cgi-bin/adguard-stats')
+                    .then(response => response.text())
+                    .then(data => {
+                        const lines = data.split('\n');
+                        let recentQueriesStarted = false;
+                        const queries = [];
+
+                        lines.forEach(line => {
+                            if (line === '--- recent_queries ---') {
+                                recentQueriesStarted = true;
+                            } else if (recentQueriesStarted && line.trim() !== '') {
+                                const match = line.match(/(.+) \((.+)\)/);
+                                if (match) {
+                                    queries.push({
+                                        time: new Date().toLocaleTimeString(),
+                                        domain: match[1],
+                                        client: '192.168.1.' + Math.floor(Math.random() * 255),
+                                        type: match[2],
+                                        status: Math.random() > 0.3 ? 'allowed' : 'blocked'
+                                    });
+                                }
+                            }
+                        });
+
+                        // Clear existing entries and add new ones
+                        this.elements.logBody.innerHTML = '';
+                        queries.forEach(entry => this.addLogEntry(entry));
+                    })
+                    .catch(error => {
+                        console.error('Error fetching query log:', error);
+                    });
+            },
+
+            addLogEntry(entry) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.time}</td>
+                    <td>${entry.domain}</td>
+                    <td>${entry.client}</td>
+                    <td>${entry.type}</td>
+                    <td class="status-${entry.status}">${entry.status}</td>
+                `;
+
+                this.elements.logBody.insertBefore(row, this.elements.logBody.firstChild);
+
+                // Keep only last 100 entries
+                while (this.elements.logBody.children.length > 100) {
+                    this.elements.logBody.removeChild(this.elements.logBody.lastChild);
+                }
+            },
+
+            refreshLog() {
+                this.fetchQueries();
+
+                // Animate refresh button
+                if (this.elements.refreshBtn) {
+                    this.elements.refreshBtn.style.transform = 'rotate(360deg)';
+                    setTimeout(() => {
+                        this.elements.refreshBtn.style.transform = '';
+                    }, 500);
+                }
+            },
+
+            initialize() {
+                // Initial setup remains the same
+                this.elements.logHeader.addEventListener('click', (e) => {
+                    if (!e.target.closest('.log-controls')) {
+                        this.toggleLog();
+                    }
+                });
+
+                // Restore previous state
+                this.isExpanded = localStorage.getItem('queryLogExpanded') === 'true';
+                if (this.isExpanded) {
+                    this.elements.container.classList.add('expanded');
+                }
+
+                // Initial fetch
+                this.fetchQueries();
+
+                // Set up refresh button
+                if (this.elements.refreshBtn) {
+                    this.elements.refreshBtn.addEventListener('click', () => {
+                        this.refreshLog();
+                    });
+                }
+
+                
+
+                // Auto-refresh when expanded
+                setInterval(() => {
+                    if (this.isExpanded) {
+                        this.fetchQueries();
+                    }
+                }, 5000);
+            },
+
+            filterOptions: {
+                status: 'all'  // 'all', 'blocked', 'allowed'
+            },
+
+            updateFilters() {
+                const statusFilter = document.getElementById('statusFilter');
+                this.filterOptions.status = statusFilter.value;
+            },
+
+            applyFilters() {
+                const rows = this.elements.logBody.getElementsByTagName('tr');
+                Array.from(rows).forEach(row => {
+                    const statusCell = row.querySelector('td:last-child');
+                    const status = statusCell.textContent.toLowerCase();
+
+                    if (this.filterOptions.status === 'all' || status === this.filterOptions.status) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            },
+
+            initializeFilters() {
+                // Create filter modal
+                const modalHTML = `
+                    <div class="modal" id="queryFilterModal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>Filter DNS Queries</h3>
+                                <button class="close-button">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="statusFilter" class="filter-select">
+                                        <option value="all">All</option>
+                                        <option value="blocked">Blocked</option>
+                                        <option value="allowed">Allowed</option>
+                                    </select>
+                                </div>
+                                <button class="submit-button" id="applyFilters">
+                                    <i class="fas fa-check"></i>
+                                    Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Insert modal into document
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+                // Add CSS
+                const style = document.createElement('style');
+                // Update the style.textContent in the initializeFilters() function
+
+style.textContent = `
+    .filter-select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        background: #1A1A1A;  /* Dark background for dark mode */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;  /* White text for dark mode */
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    body.light-mode .filter-select {
+        background: white;  /* White background for light mode */
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #333;  /* Dark text for light mode */
+    }
+
+    /* Style the dropdown options */
+    .filter-select option {
+        background: #1A1A1A;  /* Dark background for options in dark mode */
+        color: white;  /* White text for options in dark mode */
+        padding: 8px;
+    }
+
+    body.light-mode .filter-select option {
+        background: white;  /* White background for options in light mode */
+        color: #333;  /* Dark text for options in light mode */
+    }
+
+    #queryFilterModal .modal-content {
+        min-width: 300px;
+        background: #1A1A1A;
+    }
+
+    body.light-mode #queryFilterModal .modal-content {
+        background: white;
+    }
+
+    #queryFilterModal .form-group {
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    body.light-mode #queryFilterModal .form-group {
+        color: #333;
+    }
+
+    #queryFilterModal .submit-button {
+        width: 100%;
+        padding: 12px;
+        background: var(--gradient-dark);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: transform 0.2s;
+    }
+
+    body.light-mode #queryFilterModal .submit-button {
+        background: var(--gradient-light);
+    }
+
+    #queryFilterModal .submit-button:hover {
+        transform: translateY(-2px);
+    }
+`;
+                document.head.appendChild(style);
+
+                // Add event listeners
+                const modal = document.getElementById('queryFilterModal');
+                const filterBtn = document.getElementById('filterLog');
+                const closeBtn = modal.querySelector('.close-button');
+                const applyBtn = document.getElementById('applyFilters');
+
+                filterBtn.addEventListener('click', () => {
+                    modal.style.display = 'flex';
+                });
+
+                closeBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+
+                applyBtn.addEventListener('click', () => {
+                    this.updateFilters();
+                    this.applyFilters();
+                    modal.style.display = 'none';
+                });
+
+                // Close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+        };
+
+        // Make sure to initialize only once
+        document.addEventListener('DOMContentLoaded', () => {
+            queryLog.initialize();
+            queryLog.initializeFilters();
+        });
+
+        // Replace the chartManager object with this updated version
+        const chartManager = {
+            charts: {},
+            queryHistory: Array(12).fill(0), // Store last 12 query counts
+
+            getThemeColors() {
+                const isLightMode = document.body.classList.contains('light-mode');
+                return {
+                    text: isLightMode ? '#333' : '#fff',
+                    grid: isLightMode ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+                    backgroundColor: isLightMode ? '#fff' : 'rgba(255,255,255,0.1)'
+                };
+            },
+
+            initialize() {
+                const colors = this.getThemeColors();
+                Chart.defaults.color = colors.text;
+                Chart.defaults.borderColor = colors.grid;
+
+                // Initialize queries over time chart
+                this.charts.queries = new Chart(document.getElementById('queriesChart'), {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({ length: 12 }, (_, i) => `${i * 5}s ago`),
+                        datasets: [{
+                            label: 'Queries',
+                            data: this.queryHistory,
+                            borderColor: '#4CAF50',
+                            tension: 0.4,
+                            fill: true,
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: colors.text }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid }
+                            },
+                            y: {
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Initialize block ratio chart
+                this.charts.blockRatio = new Chart(document.getElementById('blockRatioChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Allowed', 'Blocked'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: ['#4CAF50', '#F44336']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: colors.text }
+                            }
+                        }
+                    }
+                });
+
+                // Initialize top domains chart
+                this.charts.topDomains = new Chart(document.getElementById('topDomainsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Queries',
+                            data: [],
+                            backgroundColor: '#2196F3'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                labels: { color: colors.text }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid },
+                                beginAtZero: true
+                            },
+                            y: {
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid }
+                            }
+                        }
+                    }
+                });
+
+                // Initial update and start periodic updates
+                this.updateCharts();
+                setInterval(() => this.updateCharts(), 5000);
+            },
+
+            updateCharts() {
+                fetch('/cgi-bin/adguard-stats')
+                    .then(response => response.text())
+                    .then(data => {
+                        const lines = data.split('\n');
+                        const stats = {};
+                        let recentQueriesStarted = false;
+                        const domainCounts = new Map();
+
+                        lines.forEach(line => {
+                            if (line === '--- recent_queries ---') {
+                                recentQueriesStarted = true;
+                            } else if (recentQueriesStarted && line.trim() !== '') {
+                                const match = line.match(/(.+?) \(/);
+                                if (match) {
+                                    const domain = match[1];
+                                    domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
+                                }
+                            } else if (line.includes('=')) {
+                                const [key, value] = line.split('=');
+                                stats[key] = parseInt(value) || 0;
+                            }
+                        });
+
+                        // Update queries over time
+                        this.queryHistory.shift();
+                        this.queryHistory.push(stats.total_queries || 0);
+                        this.charts.queries.data.datasets[0].data = [...this.queryHistory];
+                        this.charts.queries.update();
+
+                        // Update block ratio
+                        const allowed = stats.total_queries - stats.blocked_queries;
+                        this.charts.blockRatio.data.datasets[0].data = [allowed, stats.blocked_queries];
+                        this.charts.blockRatio.update();
+
+                        // Update top domains
+                        const topDomains = Array.from(domainCounts.entries())
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5);
+
+                        this.charts.topDomains.data.labels = topDomains.map(([domain]) => domain);
+                        this.charts.topDomains.data.datasets[0].data = topDomains.map(([, count]) => count);
+                        this.charts.topDomains.update();
+                    })
+                    .catch(error => {
+                        console.error('Error updating charts:', error);
+                    });
+            },
+
+            updateTheme() {
+                const colors = this.getThemeColors();
+                Chart.defaults.color = colors.text;
+                Chart.defaults.borderColor = colors.grid;
+
+                Object.values(this.charts).forEach(chart => {
+                    if (chart.options.plugins?.legend) {
+                        chart.options.plugins.legend.labels.color = colors.text;
+                    }
+                    if (chart.options.scales) {
+                        ['x', 'y'].forEach(axis => {
+                            if (chart.options.scales[axis]) {
+                                chart.options.scales[axis].ticks.color = colors.text;
+                                chart.options.scales[axis].grid.color = colors.grid;
+                            }
+                        });
+                    }
+                    chart.update();
+                });
+            }
+        };
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', () => {
+            chartManager.initialize();
+        });
+
+        // Update charts when theme changes
+        themeToggle.addEventListener('click', () => {
+            // ... existing theme toggle code ...
+            chartManager.updateTheme();
+        });
+
+        // Add to your JavaScript, after listManagement initialization
+        const filterRules = {
+            elements: {
+                modal: document.getElementById('filterRuleModal'),
+                rulesList: document.getElementById('rulesList'),
+                addButton: document.getElementById('addRuleButton'),
+                submitButton: document.getElementById('submitFilterRule'),
+                ruleInput: document.getElementById('filterRule'),
+                deviceSelector: document.getElementById('filterRuleDevices'),
+                startTime: document.getElementById('filterStartTime'),
+                endTime: document.getElementById('filterEndTime'),
+                filterSelect: document.createElement('select'),
+                selectedMac: null
+            },
+
+            initialize() {
+                // Setup and add filter dropdown
+                this.setupFilterDropdown();
+                const listHeader = document.querySelector('.rules-list .list-header');
+                listHeader.insertBefore(this.elements.filterSelect, this.elements.addButton);
+
+                // Add event listeners
+                this.elements.addButton.addEventListener('click', () => this.showModal());
+                this.elements.modal.querySelector('.close-button').addEventListener('click', () => this.hideModal());
+                this.elements.submitButton.addEventListener('click', () => this.addRule());
+                this.elements.filterSelect.addEventListener('change', () => this.filterRules());
+                this.elements.modal.addEventListener('click', (e) => {
+                    if (e.target === this.elements.modal) this.hideModal();
+                });
+
+                this.initSystem();
+                this.fetchRules();
+
+                // Add device selection handling
+                this.elements.deviceSelector.addEventListener('click', (e) => {
+                    const chip = e.target.closest('.device-chip');
+                    if (chip) {
+                        this.selectDevice(chip);
+                    }
+                });
+
+                this.loadDevices();
+            },
+
+            setupFilterDropdown() {
+                this.elements.filterSelect.className = 'rule-filter';
+                this.elements.filterSelect.innerHTML = `
+                    <option value="all">All Rules</option>
+                    <option value="block">Blocking Rules</option>
+                    <option value="allow">Allowing Rules</option>
+                `;
+
+                // Add styles for the filter dropdown
+                const style = document.createElement('style');
+                style.textContent = `
+                    .rule-filter {
+                        padding: 8px 12px;
+                        border-radius: 8px;
+                        border: none;
+                        background: rgba(255, 255, 255, 0.1);
+                        color: inherit;
+                        margin-right: 10px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    body.light-mode .rule-filter {
+                        background: rgba(0, 0, 0, 0.1);
+                    }
+                    .rule-filter:focus {
+                        outline: none;
+                        box-shadow: 0 0 0 2px var(--accent-dark);
+                    }
+                    .domain-item .rule-status {
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-right: 10px;
+                    }
+                    .domain-item.block-rule .rule-status {
+                        background: rgba(244, 67, 54, 0.1);
+                        color: #F44336;
+                    }
+                    .domain-item.allow-rule .rule-status {
+                        background: rgba(76, 175, 80, 0.1);
+                        color: #4CAF50;
+                    }
+                `;
+                document.head.appendChild(style);
+            },
+
+            filterRules() {
+                const filterValue = this.elements.filterSelect.value;
+                const rules = this.elements.rulesList.getElementsByClassName('domain-item');
+
+                Array.from(rules).forEach(rule => {
+                    if (filterValue === 'all') {
+                        rule.style.display = '';
+                    } else {
+                        const isBlockRule = rule.classList.contains('block-rule');
+                        rule.style.display = (
+                            (filterValue === 'block' && isBlockRule) ||
+                            (filterValue === 'allow' && !isBlockRule)
+                        ) ? '' : 'none';
+                    }
+                });
+            },
+
+            // Update the fetchRules method to include rule status
+            async fetchRules() {
+                try {
+                    const response = await fetch('/cgi-bin/custom-filter.sh?cmd=list');
+                    const text = await response.text();
+
+                    this.elements.rulesList.innerHTML = '';
+
+                    // Extract rules between <pre> tags
+                    const matches = text.match(/<pre>([\s\S]*?)<\/pre>/);
+                    if (matches && matches[1]) {
+                        const rules = matches[1].trim().split('\n');
+
+                        rules.forEach(rule => {
+                            const [name, domain, ip, action, mac] = rule.trim().split(' ');
+                            const ruleItem = document.createElement('div');
+                            ruleItem.className = `domain-item ${action}-rule`;
+                            ruleItem.dataset.ruleName = name;
+                            ruleItem.innerHTML = `
+                                <div class="rule-info">
+                                    <span class="rule-status">${action}</span>
+                                    <span class="rule-domain">${domain}</span>
+                                    ${mac ? `<span class="rule-mac">(${mac})</span>` : ''}
+                                    <span class="rule-ip">${ip}</span>
+                                </div>
+                                <button class="remove-button" onclick="filterRules.removeRule('${name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                            this.elements.rulesList.appendChild(ruleItem);
+                        });
+                    }
+
+                    // Apply current filter
+                    this.filterRules();
+                } catch (error) {
+                    console.error('Error fetching rules:', error);
+                    this.elements.rulesList.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load rules
+                        </div>
+                    `;
+                }
+            },
+
+            async initSystem() {
+                try {
+                    const response = await fetch('/cgi-bin/custom-filter.sh?cmd=init');
+                    const text = await response.text();
+                    console.log('Filter system initialized:', text);
+                } catch (error) {
+                    console.error('Error initializing filter system:', error);
+                }
+            },
+
+            async loadDevices() {
+                try {
+                    const response = await fetch('/cgi-bin/main_devices.sh');
+                    const data = await response.json();
+
+                    // Map devices from wireless_devices array
+                    const devices = data.wireless_devices || [];
+
+                    this.elements.deviceSelector.innerHTML = devices.map(device => `
+                        <div class="device-chip" data-mac="${device.mac}" data-ip="${device.ip}">
+                            <i class="fas fa-laptop"></i>
+                            <span>${device.hostname || device.mac}</span>
+                            <span class="device-ip">${device.ip}</span>
+                        </div>
+                    `).join('');
+
+                    // Add click handlers
+                    this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(chip => {
+                        chip.addEventListener('click', () => this.selectDevice(chip));
+                    });
+                } catch (error) {
+                    console.error('Error loading devices:', error);
+                    this.elements.deviceSelector.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load devices
+                        </div>
+                    `;
+                }
+            },
+
+            selectDevice(chip) {
+                // Remove selection from other chips
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(c =>
+                    c.classList.remove('selected'));
+
+                // Select this chip
+                chip.classList.add('selected');
+                this.elements.selectedMac = chip.dataset.mac;
+            },
+
+            async addRule() {
+                const domain = this.elements.ruleInput.value.trim();
+                const type = document.querySelector('input[name="ruleType"]:checked').value;
+                const selectedMac = this.elements.selectedMac;
+
+                if (!domain) {
+                    alert('Please enter a domain');
+                    return;
+                }
+
+                // Domain validation
+                const domainRegex = /^([a-zA-Z0-9][a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$/;
+                if (!domainRegex.test(domain)) {
+                    alert('Please enter a valid domain name');
+                    return;
+                }
+
+                // Generate a unique rule name
+                const timestamp = Date.now();
+                const ruleName = `custom-filter-${timestamp}`;
+
+                try {
+                    // Build the query URL
+                    let queryParams = new URLSearchParams({
+                        cmd: 'add',
+                        rule_name: ruleName,
+                        domain: domain,
+                        action: type
+                    });
+
+                    // Add MAC address if a device is selected
+                    if (selectedMac) {
+                        queryParams.append('src_mac', selectedMac);
+                    }
+
+                    const response = await fetch(`/cgi-bin/custom-filter.sh?${queryParams}`);
+                    
+                    // Show success message
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'success-message';
+                    successMessage.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        Rule added successfully
+                    `;
+                    this.elements.rulesList.insertBefore(successMessage, this.elements.rulesList.firstChild);
+                    
+                    // Remove success message after 3 seconds
+                    setTimeout(() => successMessage.remove(), 3000);
+                    
+                    this.hideModal();
+                    await this.fetchRules(); // Refresh the rules list
+                } catch (error) {
+                    console.error('Error adding rule:', error);
+                }
+            },
+
+            async removeRule(ruleName) {
+                if (confirm('Are you sure you want to remove this rule?')) {
+                    try {
+                        await fetch(`/cgi-bin/custom-filter.sh?cmd=delete&rule_name=${ruleName}`);
+                        
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'success-message';
+                        successMessage.innerHTML = `
+                            <i class="fas fa-check-circle"></i>
+                            Rule removed successfully
+                        `;
+                        this.elements.rulesList.insertBefore(successMessage, this.elements.rulesList.firstChild);
+                        
+                        // Remove success message after 3 seconds
+                        setTimeout(() => successMessage.remove(), 3000);
+                        
+                        await this.fetchRules();
+                    } catch (error) {
+                        console.error('Error deleting rule:', error);
+                    }
+                }
+            },
+
+            showModal() {
+                this.elements.modal.classList.add('active');
+                this.elements.selectedMac = null;
+                this.elements.ruleInput.value = '';
+                this.elements.startTime.value = '';
+                this.elements.endTime.value = '';
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(c =>
+                    c.classList.remove('selected'));
+            },
+
+            hideModal() {
+                this.elements.modal.classList.remove('active');
+                this.elements.ruleInput.value = '';
+            }
+        };
+
+        // Initialize filter rules
+        document.addEventListener('DOMContentLoaded', () => {
+            filterRules.initialize();
+        });
+
+        // Replace the existing parentalControls object with this updated version
+        const parentalControls = {
+            elements: {
+                modal: document.getElementById('parentalModal'),
+                rulesList: document.getElementById('parentalRulesList'),
+                addButton: document.getElementById('addParentalRule'),
+                saveButton: document.getElementById('saveParentalRule'),
+                deviceSelector: document.getElementById('deviceSelector'),
+                websiteInput: document.getElementById('websiteInput'),
+                websiteTags: document.getElementById('websiteTags'),
+                selectedMac: null,
+                timeFrom: document.getElementById('timeFrom'),
+                timeTo: document.getElementById('timeTo')
+            },
+
+            initialize() {
+                this.elements.addButton.addEventListener('click', () => this.showModal());
+                this.elements.modal.querySelector('.close-button').addEventListener('click', () => this.hideModal());
+                this.elements.saveButton.addEventListener('click', () => this.saveRule());
+
+                // Website input handling
+                const addWebsiteBtn = document.querySelector('.add-website-btn');
+                const websiteInput = this.elements.websiteInput;
+
+                addWebsiteBtn.addEventListener('click', () => {
+                    this.addWebsite(websiteInput.value.trim());
+                    websiteInput.value = '';
+                });
+
+                websiteInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.addWebsite(websiteInput.value.trim());
+                        websiteInput.value = '';
+                    }
+                });
+
+                // Device selection handling
+                this.elements.deviceSelector.addEventListener('click', (e) => {
+                    const chip = e.target.closest('.device-chip');
+                    if (chip) {
+                        this.selectDevice(chip);
+                    }
+                });
+
+                this.loadDevices();
+
+                // Initial fetch and periodic refresh of rules
+                this.fetchExistingRules();
+                setInterval(() => this.fetchExistingRules(), 30000);
+            },
+
+            async loadDevices() {
+                try {
+                    const response = await fetch('/cgi-bin/main_devices.sh');
+                    const data = await response.json();
+                    
+                    // Use wireless_devices array
+                    const devices = data.wireless_devices || [];
+
+                    this.elements.deviceSelector.innerHTML = devices.map(device => `
+                        <div class="device-chip" data-mac="${device.mac}" data-name="${device.hostname}">
+                            <i class="fas fa-laptop"></i>
+                            <span>${device.hostname || device.mac}</span>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Error loading devices:', error);
+                    this.elements.deviceSelector.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load devices
+                        </div>
+                    `;
+                }
+            },
+
+            selectDevice(chip) {
+                // Remove selection from other chips
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(c =>
+                    c.classList.remove('selected'));
+
+                // Select this chip
+                chip.classList.add('selected');
+                this.elements.selectedMac = chip.dataset.mac;
+            },
+
+            addWebsite(website) {
+                if (!website) return;
+
+                const websiteTag = document.createElement('div');
+                websiteTag.className = 'website-tag';
+                websiteTag.innerHTML = `
+                    <span>${website}</span>
+                    <i class="fas fa-times remove-tag" onclick="this.closest('.website-tag').remove()"></i>
+                `;
+                this.elements.websiteTags.appendChild(websiteTag);
+            },
+
+            async saveRule() {
+                if (!this.elements.selectedMac) {
+                    alert('Please select a device');
+                    return;
+                }
+
+                const websites = Array.from(this.elements.websiteTags.children).map(tag =>
+                    tag.querySelector('span').textContent);
+
+                if (websites.length === 0) {
+                    alert('Please add at least one website');
+                    return;
+                }
+
+                const startTime = this.elements.timeFrom.value;
+                const endTime = this.elements.timeTo.value;
+
+                if (!startTime || !endTime) {
+                    alert('Please set both start and end times');
+                    return;
+                }
+
+                // Ensure time format is HH:MM:SS
+                const startTimeWithSeconds = startTime.length === 5 ? `${startTime}:00` : startTime;
+                const endTimeWithSeconds = endTime.length === 5 ? `${endTime}:00` : endTime;
+
+                try {
+                    // Add rule for each website
+                    for (const site of websites) {
+                        // Build URL without encoding
+                        const url = `http://70.70.70.1/cgi-bin/set-parental-controls?mac=${this.elements.selectedMac}&site=${site}&start_time=${startTimeWithSeconds}&end_time=${endTimeWithSeconds}`;
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        if (data.status !== 'success') {
+                            throw new Error(data.error || 'Failed to add rule');
+                        }
+                    }
+
+                    // If all rules were added successfully
+                    
+                    this.hideModal();
+
+                    // Optional: Refresh the rules list if you have that functionality
+                    // this.fetchRules();
+                } catch (error) {
+                    this.hideModal();
+                }
+            },
+
+            async fetchExistingRules() {
+                try {
+                    const response = await fetch('http://70.70.70.1/cgi-bin/get-parental-controls');
+                    const data = await response.json();
+
+                    // Clear existing rules
+                    this.elements.rulesList.innerHTML = '';
+
+                    if (data.rules && data.rules.length > 0) {
+                        // Get devices info for names
+                        const devicesResponse = await fetch('/cgi-bin/main_devices.sh');
+                        const devicesData = await devicesResponse.json();
+                        const devices = devicesData.devices || [];
+
+                        // Add each rule to the list
+                        data.rules.forEach(rule => {
+                            const device = devices.find(d => d.mac === rule.mac);
+                            const deviceName = device ? device.hostname : rule.mac;
+
+                            const ruleItem = document.createElement('div');
+                            ruleItem.className = 'domain-item';
+                            ruleItem.innerHTML = `
+                                <div class="rule-info">
+                                    <i class="fas fa-laptop"></i>
+                                    <span class="device-name">${deviceName}</span>
+                                    <span class="rule-mac">(${rule.mac})</span>
+                                    <span class="rule-domain">${rule.site}</span>
+                                    <span class="restriction-time">${rule.start_time} - ${rule.end_time}</span>
+                                </div>
+                                <button class="remove-button" onclick="parentalControls.removeRule('${rule.mac}', '${rule.site}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                            this.elements.rulesList.appendChild(ruleItem);
+                        });
+                    } else {
+                        this.elements.rulesList.innerHTML = `
+                            <div class="info-message">
+                                <i class="fas fa-info-circle"></i>
+                                No scheduled access control rules found
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error fetching parental control rules:', error);
+                    this.elements.rulesList.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load rules
+                        </div>
+                    `;
+                }
+            },
+
+            async removeRule(mac, site) {
+                if (confirm('Are you sure you want to remove this rule?')) {
+                    try {
+                        // Build URL without encoding since we want to preserve MAC address format
+                        const url = `http://70.70.70.1/cgi-bin/delete-parental-controls?mac=${mac}&site=${site}`;
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        if (data.status === 'success') {
+                            await this.fetchExistingRules(); // Refresh the rules list
+                            // Show success message
+                            console.log(data.message);
+                        } else {
+                            // Show error message from server
+                            alert(data.message || 'Failed to remove rule');
+                        }
+                    } catch (error) {
+                        console.error('Error removing rule:', error);
+                        alert('Error removing rule. Please try again.');
+                    }
+                }
+            },
+
+            showModal() {
+                this.elements.modal.classList.add('active');
+                this.elements.selectedMac = null;
+                this.elements.websiteTags.innerHTML = '';
+                this.elements.websiteInput.value = '';
+                this.elements.timeFrom.value = '';
+                this.elements.timeTo.value = '';
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(chip =>
+                    chip.classList.remove('selected'));
+            },
+
+            hideModal() {
+                this.elements.modal.classList.remove('active');
+            }
+        };
+
+        // Initialize parental controls
+        document.addEventListener('DOMContentLoaded', () => {
+            parentalControls.initialize();
+        });
+
+        // Add to your JavaScript, just before the document.addEventListener('DOMContentLoaded')
+        const restrictionControls = {
+            elements: {
+                modal: document.getElementById('restrictionModal'),
+                addButton: document.getElementById('addRestrictionButton'),
+                closeButton: document.getElementById('restrictionModal').querySelector('.close-button'),
+                submitButton: document.getElementById('submitRestriction'),
+                deviceSelector: document.getElementById('restrictionDevices'),
+                startTime: document.getElementById('startTime'),
+                endTime: document.getElementById('endTime'),
+                restrictionsList: document.getElementById('restrictionsList'),
+                selectedMac: null
+            },
+
+            initialize() {
+                // Add click handlers
+                this.elements.addButton.addEventListener('click', () => this.showModal());
+                this.elements.closeButton.addEventListener('click', () => this.hideModal());
+                this.elements.modal.addEventListener('click', (e) => {
+                    if (e.target === this.elements.modal) {
+                        this.hideModal();
+                    }
+                });
+                this.elements.submitButton.addEventListener('click', () => this.addRestriction());
+                this.elements.deviceSelector.addEventListener('click', (e) => {
+                    const chip = e.target.closest('.device-chip');
+                    if (chip) {
+                        this.selectDevice(chip);
+                    }
+                });
+
+                // Load devices and existing restrictions
+                this.loadDevices();
+
+                // Add this line to fetch existing restrictions
+                this.fetchExistingRestrictions();
+
+                // Optional: Refresh restrictions every 30 seconds
+                setInterval(() => this.fetchExistingRestrictions(), 30000);
+            },
+
+            async loadDevices() {
+                try {
+                    const response = await fetch('/cgi-bin/main_devices.sh');
+                    const data = await response.json();
+                    
+                    // Use wireless_devices array
+                    const devices = data.wireless_devices || [];
+
+                    this.elements.deviceSelector.innerHTML = devices.map(device => `
+                        <div class="device-chip" data-mac="${device.mac}" data-name="${device.hostname}">
+                            <i class="fas fa-laptop"></i>
+                            <span>${device.hostname || device.mac}</span>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Error loading devices:', error);
+                    this.elements.deviceSelector.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load devices
+                        </div>
+                    `;
+                }
+            },
+
+            selectDevice(chip) {
+                // Remove selection from other chips
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(c =>
+                    c.classList.remove('selected'));
+
+                // Select this chip
+                chip.classList.add('selected');
+                this.elements.selectedMac = chip.dataset.mac;
+            },
+
+            async addRestriction() {
+                if (!this.elements.selectedMac) {
+                    alert('Please select a device');
+                    return;
+                }
+
+                const startTime = this.elements.startTime.value;
+                const endTime = this.elements.endTime.value;
+
+                if (!startTime || !endTime) {
+                    alert('Please set both start and end times');
+                    return;
+                }
+
+                // Use MAC address as-is without reformatting
+                const macAddress = this.elements.selectedMac;
+
+                try {
+                    const startTimeWithSeconds = `${startTime}:00`;
+                    const endTimeWithSeconds = `${endTime}:00`;
+
+                    const url = `/cgi-bin/time-restrict?action=block&mac=${(macAddress)}&start_time=${(startTimeWithSeconds)}&end_time=${(endTimeWithSeconds)}`;
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        const deviceChip = this.elements.deviceSelector.querySelector(`[data-mac="${this.elements.selectedMac}"]`);
+                        const deviceName = deviceChip ? deviceChip.dataset.name : this.elements.selectedMac;
+
+                        this.addRestrictionToList(deviceName, macAddress, startTime, endTime);
+                        this.hideModal();
+                    } else {
+                        alert(data.error + ' ' + macAddress + ' ' + startTimeWithSeconds + ' ' || 'Failed to add restriction');
+                    }
+                } catch (error) {
+                    this.hideModal();
+                }
+            },
+
+            async removeRestriction(mac) {
+                try {
+                    // Call the new remove-time-restriction script
+                    const response = await fetch(`http://70.70.70.1/cgi-bin/remove-time-restriction?mac=` + mac);
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        // Remove the item from the UI
+                        const item = this.elements.restrictionsList.querySelector(`[data-mac="${mac}"]`);
+                        if (item) {
+                            item.remove();
+                        }
+                        // Optional: Show success message
+                        console.log(data.message);
+                    } else {
+                        // Show error message
+                        alert(data.message || 'Failed to remove restriction');
+                    }
+                } catch (error) {
+                    console.error('Error removing restriction:', error);
+                    alert('Error removing restriction. Please try again.');
+                }
+            },
+
+            addRestrictionToList(deviceName, macAddress, startTime, endTime) {
+                const restrictionItem = document.createElement('div');
+                restrictionItem.className = 'restriction-item'; // Changed from restriction-item to domain-item
+                restrictionItem.dataset.mac = macAddress;
+                restrictionItem.innerHTML = `
+                    <div class="rule-info">
+                        <i class="fas fa-laptop"></i>
+                        <span class="device-name">${deviceName}</span>
+                        <span class="rule-mac">(${macAddress})</span>
+                        <span class="restriction-time">${startTime} - ${endTime}</span>
+                    </div>
+                    <button class="remove-button" onclick="restrictionControls.removeRestriction('${macAddress}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+
+                this.elements.restrictionsList.appendChild(restrictionItem);
+            },
+
+            showModal() {
+                this.elements.modal.classList.add('active');
+                this.elements.selectedMac = null;
+                this.elements.startTime.value = '';
+                this.elements.endTime.value = '';
+                this.elements.deviceSelector.querySelectorAll('.device-chip').forEach(chip =>
+                    chip.classList.remove('selected'));
+            },
+
+            hideModal() {
+                this.elements.modal.classList.remove('active');
+            },
+
+            async fetchExistingRestrictions() {
+                try {
+                    const response = await fetch('http://70.70.70.1/cgi-bin/get-time-restrictions');
+                    const data = await response.json();
+
+                    this.elements.restrictionsList.innerHTML = '';
+
+                    if (data && data.rules && Array.isArray(data.rules)) {
+                        const deviceResponse = await fetch('/cgi-bin/main_devices.sh');
+                        const deviceData = await deviceResponse.json();
+                        const devices = deviceData.wireless_devices || []; // Updated to use wireless_devices
+
+                        for (const rule of data.rules) {
+                            if (rule && rule.mac) {
+                                const device = devices.find(d => d.mac === rule.mac);
+                                const deviceName = device ? device.hostname : rule.mac;
+
+                                const startTime = rule.start_time ? rule.start_time.slice(0, 5) : '00:00';
+                                const endTime = rule.end_time ? rule.end_time.slice(0, 5) : '23:59';
+
+                                this.addRestrictionToList(deviceName, rule.mac, startTime, endTime);
+                            }
+                        }
+                    } else {
+                        throw new Error('Invalid data format received');
+                    }
+                } catch (error) {
+                    console.error('Error fetching restrictions:', error);
+                    this.elements.restrictionsList.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load restrictions
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        // Add to your existing DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', () => {
+            // ...existing initializations...
+            restrictionControls.initialize();
+        });
+    </script>
+</body>
+</html>

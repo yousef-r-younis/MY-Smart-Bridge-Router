@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo ""
+
+# Get schedule entries from crontab
+enable_entry=$(grep "guest_network enable" /etc/crontabs/root)
+disable_entry=$(grep "guest_network disable" /etc/crontabs/root)
+
+if [ -n "$enable_entry" ] && [ -n "$disable_entry" ]; then
+    # Extract times from crontab entries
+    start_minute=$(echo "$enable_entry" | awk '{print $1}')
+    start_hour=$(echo "$enable_entry" | awk '{print $2}')
+    end_minute=$(echo "$disable_entry" | awk '{print $1}')
+    end_hour=$(echo "$disable_entry" | awk '{print $2}')
+
+    # Format times as HH:MM
+    start_time=$(printf "%02d:%02d" "$start_hour" "$start_minute")
+    end_time=$(printf "%02d:%02d" "$end_hour" "$end_minute")
+
+    echo "{\"status\":\"success\",\"schedule\":{\"start\":\"$start_time\",\"end\":\"$end_time\"}}"
+else
+    echo "{\"status\":\"success\",\"schedule\":null}"
+fi

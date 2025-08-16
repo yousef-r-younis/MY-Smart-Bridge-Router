@@ -1,0 +1,27 @@
+#!/bin/sh
+
+echo "Content-Type: application/json"
+echo ""
+
+# Perform WiFi scan on phy0-sta0
+SCAN_RESULT=$(iwinfo phy0-sta0 scan 2>/dev/null)
+
+if [ -z "$SCAN_RESULT" ]; then
+    echo '{"error": "Failed to scan WiFi networks on phy0-sta0."}'
+    exit 1
+fi
+
+# Parse output into JSON (only SSID and Signal for display)
+echo "["
+echo "$SCAN_RESULT" | awk '
+/ESSID:/ {
+    sub(/^.*ESSID: "/, "", $0);
+    sub(/"$/, "", $0);
+    ssid=$0
+}
+/Signal:/ {
+    sub(/^.*Signal: /, "", $0);
+    signal=$0
+    printf "{\"ssid\": \"%s\", \"signal\": \"%s dBm\"},\n", ssid, signal
+}' | sed '$ s/,$//'
+echo "]"

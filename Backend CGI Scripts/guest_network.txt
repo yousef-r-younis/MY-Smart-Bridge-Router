@@ -1,0 +1,27 @@
+#!/bin/sh
+
+action="$1"
+logger "Guest network scheduler: Executing action $action"
+
+case "$action" in
+    "enable")
+        # Enable guest network using correct UCI path
+        uci set wireless.wifinet2.disabled='0'
+        uci commit wireless
+        wifi reload
+        logger "Guest network enabled by scheduler"
+        exit 0
+        ;;
+    "disable")
+        # Disable guest network using correct UCI path
+        uci set wireless.wifinet2.disabled='1'
+        uci commit wireless
+        wifi reload
+        logger "Guest network disabled by scheduler"
+        exit 0
+        ;;
+    *)
+        logger "Invalid action for guest network: $action"
+        exit 1
+        ;;
+esac

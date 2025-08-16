@@ -1,0 +1,35 @@
+#!/bin/sh
+# filepath: /www/cgi-bin/store-session
+echo "Content-type: application/json"
+echo ""
+
+# Read JSON input
+read -r POSTDATA
+
+# Extract data from JSON
+SESSION_ID=$(echo "$POSTDATA" | grep -o '"sessionId":"[^"]*' | cut -d'"' -f4)
+MAC_ADDRESS=$(echo "$POSTDATA" | grep -o '"macAddress":"[^"]*' | cut -d'"' -f4)
+USERNAME=$(echo "$POSTDATA" | grep -o '"username":"[^"]*' | cut -d'"' -f4)
+TIMESTAMP=$(echo "$POSTDATA" | grep -o '"timestamp":[0-9]*' | cut -d':' -f2)
+
+# Store session in file with 30-minute expiration
+echo "$SESSION_ID|$MAC_ADDRESS|$USERNAME|$TIMESTAMP" >> /tmp/sessions
+
+# Clean expired sessions (older than 30 minutes)
+CURRENT_TIME=$(date +%s%N | cut -b1-13)
+EXPIRY_TIME=$((CURRENT_TIME - 1800000))
+
+# Create a temporary file for non-expired sessions
+TEMP_FILE=$(mktemp)
+
+# Filter out expired sessions
+while IFS='|' read -r sid mac user ts || [ -n "$ts" ]; do
+    if [ -n "$ts" ] && [ "$ts" -gt "$EXPIRY_TIME" ]; then
+        echo "$sid|$mac|$user|$ts" >> "$TEMP_FILE"
+    fi
+done < /tmp/sessions
+
+# Replace the sessions file with the filtered version
+mv "$TEMP_FILE" /tmp/sessions
+
+echo '{"status":"success"}'

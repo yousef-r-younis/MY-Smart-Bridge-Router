@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Send HTTP headers first
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo ""
+
+# Log the repair attempt
+logger "WiFi repair requested via web interface"
+
+# Try to restart the network service
+if /etc/init.d/network restart > /dev/null 2>&1; then
+    # Sleep to allow network to fully restart
+    sleep 5
+
+    # Check if network is back up
+    if /etc/init.d/network status | grep -q "running"; then
+        # Success response
+        echo '{"status": "success", "message": "Network service successfully restarted"}'
+        logger "WiFi repair completed successfully"
+    else
+        # Error response
+        echo '{"status": "error", "message": "Network service failed to restart"}'
+        logger "WiFi repair failed - network service not running"
+    fi
+else
+    # Error response for failed restart
+    echo '{"status": "error", "message": "Failed to restart network service"}'
+    logger "WiFi repair failed - restart command failed"
+fi
+
+exit 0

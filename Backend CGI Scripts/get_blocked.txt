@@ -1,0 +1,142 @@
+#!/bin/sh
+# OpenWrt Blocked Devices Script (Excluding Parental Controls)
+# Returns list of devices blocked in the firewall rules
+# Save as /www/cgi-bin/get_blocked and make executable
+
+# Set content type to JSON
+echo "Content-type: application/json"
+echo "Cache-Control: no-cache"
+echo ""
+
+# Start JSON output
+echo "{"
+echo "  \"timestamp\": \"$(date +%s)\","
+echo "  \"blocked_devices\": ["
+
+# Get ARP table for IP-to-MAC mapping
+ARP_TABLE=$(cat /proc/net/arp)
+
+# Helper function to get hostname from MAC address
+get_hostname() {
+    local MAC="$1"
+    local HOSTNAME=$(grep -i "$MAC" /var/dhcp.leases 2>/dev/null | awk '{print $4}')
+    if [ "$HOSTNAME" = "*" ] || [ -z "$HOSTNAME" ]; then
+        echo "null"
+    else
+        echo "$HOSTNAME"
+    fi
+}
+
+# Helper function to get IP from MAC address
+get_ip_from_mac() {
+    local MAC="$1"
+    local IP=$(echo "$ARP_TABLE" | grep -i "$MAC" | awk '{print $1}')
+    if [ -z "$IP" ]; then
+        IP=$(grep -i "$MAC" /var/dhcp.leases 2>/dev/null | awk '{print $3}')
+    fi
+    if [ -z "$IP" ]; then
+        echo "null"
+    else
+        echo "$IP"
+    fi
+}
+
+# Get all firewall rules using UCI
+UCI_RULES=$(uci show firewall | grep "=rule$")
+TOTAL_RULES=$(echo "$UCI_RULES" | wc -l)
+
+# Extract rule numbers
+RULE_NUMBERS=""
+for RULE in $UCI_RULES; do
+    NUM=$(echo "$RULE" | sed 's/firewall\.\@rule\[\([0-9]*\)\].*/\1/')
+    RULE_NUMBERS="$RULE_NUMBERS $NUM"
+done
+
+# Counter for proper JSON formatting
+TOTAL_BLOCKED=0
+CURRENT=0
+
+# First count how many blocked devices we have (excluding parental controls)
+for NUM in $RULE_NUMBERS; do
+    # Check if rule has src_mac or IP filter and target is REJECT/DROP
+    SRC_MAC=$(uci -q get firewall.@rule[$NUM].src_mac)
+    TARGET=$(uci -q get firewall.@rule[$NUM].target)
+    NAME=$(uci -q get firewall.@rule[$NUM].name)
+    START_TIME=$(uci -q get firewall.@rule[$NUM].start_time)
+    DEST_IP=$(uci -q get firewall.@rule[$NUM].dest_ip)
+
+    # Skip parental control rules
+    # Criteria: Has "Parental" in name, or has time restrictions, or has specific dest_ip
+    IS_PARENTAL=0
+    if [ -n "$NAME" ] && echo "$NAME" | grep -q "Parental"; then
+        IS_PARENTAL=1
+    elif [ -n "$START_TIME" ]; then
+        IS_PARENTAL=1
+    elif [ -n "$SRC_MAC" ] && [ -n "$DEST_IP" ]; then
+        IS_PARENTAL=1
+    fi
+
+    if [ -n "$SRC_MAC" ] && ([ "$TARGET" = "REJECT" ] || [ "$TARGET" = "DROP" ]) && [ "$IS_PARENTAL" -eq 0 ]; then
+        TOTAL_BLOCKED=$((TOTAL_BLOCKED + 1))
+    fi
+done
+
+# Now process each rule
+for NUM in $RULE_NUMBERS; do
+    # Get rule details
+    NAME=$(uci -q get firewall.@rule[$NUM].name)
+    SRC=$(uci -q get firewall.@rule[$NUM].src)
+    DEST=$(uci -q get firewall.@rule[$NUM].dest)
+    PROTO=$(uci -q get firewall.@rule[$NUM].proto)
+    SRC_MAC=$(uci -q get firewall.@rule[$NUM].src_mac)
+    DEST_IP=$(uci -q get firewall.@rule[$NUM].dest_ip)
+    TARGET=$(uci -q get firewall.@rule[$NUM].target)
+    START_TIME=$(uci -q get firewall.@rule[$NUM].start_time)
+    STOP_TIME=$(uci -q get firewall.@rule[$NUM].stop_time)
+
+    # Check if this is a parental control rule
+    IS_PARENTAL=0
+    if [ -n "$NAME" ] && echo "$NAME" | grep -q "Parental"; then
+        IS_PARENTAL=1
+    elif [ -n "$START_TIME" ]; then
+        IS_PARENTAL=1
+    elif [ -n "$SRC_MAC" ] && [ -n "$DEST_IP" ]; then
+        IS_PARENTAL=1
+    fi
+
+    # Only process rules that block devices (have src_mac and REJECT/DROP target)
+    # Exclude parental control rules
+    if [ -n "$SRC_MAC" ] && ([ "$TARGET" = "REJECT" ] || [ "$TARGET" = "DROP" ]) && [ "$IS_PARENTAL" -eq 0 ]; then
+        CURRENT=$((CURRENT + 1))
+
+        # Get IP address
+        IP=$(get_ip_from_mac "$SRC_MAC")
+
+        # Get hostname
+        HOSTNAME=$(get_hostname "$SRC_MAC")
+
+        # Output JSON for this device
+        echo "    {"
+        echo "      \"mac\": \"$SRC_MAC\","
+        echo "      \"ip\": \"$IP\","
+        echo "      \"hostname\": \"$HOSTNAME\","
+        echo "      \"name\": \"$NAME\","
+        echo "      \"block_type\": \"MAC address\","
+        echo "      \"src\": \"$SRC\","
+        echo "      \"dest\": \"$DEST\","
+        echo "      \"proto\": \"$PROTO\","
+        echo "      \"target\": \"$TARGET\","
+        echo "      \"rule_number\": \"$NUM\""
+
+        # Add comma if not the last blocked device
+        if [ $CURRENT -lt $TOTAL_BLOCKED ]; then
+            echo "    },"
+        else
+            echo "    }"
+        fi
+    fi
+done
+
+# Close JSON
+echo "  ]"
+echo "}"

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Set content type to JSON
+echo "Content-type: application/json"
+echo ""
+
+# Configuration
+HOSTS_FILE="/etc/custom_filters.hosts"
+
+# Initialize JSON array
+echo "{"
+echo "  \"rules\": ["
+
+# Read the hosts file and format as JSON
+first=true
+while IFS=' ' read -r name domain ip action src_mac; do
+    # Skip empty lines
+    [ -z "$name" ] && continue
+
+    # Add comma if not first item
+    if [ "$first" = true ]; then
+        first=false
+    else
+        echo ","
+    fi
+
+    # Output JSON object for each rule
+    echo -n "    {\"domain\": \"$domain\", \"type\": \"$action\""
+    if [ -n "$src_mac" ]; then
+        echo -n ", \"mac\": \"$src_mac\""
+    fi
+    echo -n "}"
+
+done < "$HOSTS_FILE"
+
+# Close JSON structure
+echo
+echo "  ]"
+echo "}"

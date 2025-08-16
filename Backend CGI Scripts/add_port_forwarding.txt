@@ -1,0 +1,45 @@
+#!/bin/sh
+
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo "Access-Control-Allow-Methods: POST, OPTIONS"
+echo "Access-Control-Allow-Headers: Content-Type"
+echo ""
+
+# Handle OPTIONS request for CORS
+if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
+    exit 0
+fi
+
+# Read full input (multi-line safe)
+input=$(cat)
+
+# Extract values
+rule_name=$(echo "$input" | jq -r '.rule_name')
+protocols=$(echo "$input" | jq -r '.protocols[]' | tr '\n' ',')
+external_port=$(echo "$input" | jq -r '.external_port')
+internal_ip=$(echo "$input" | jq -r '.internal_ip')
+internal_port=$(echo "$input" | jq -r '.internal_port')
+
+# Remove trailing comma from protocols
+protocols=${protocols%,}
+
+# Generate a unique firewall rule name
+uci_rule="forwarding_${rule_name}"
+
+# Add port forwarding rule to OpenWrt firewall
+if uci add firewall redirect > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].name="$rule_name" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].src="wan" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].src_dport="$external_port" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].dest="lan" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].dest_ip="$internal_ip" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].dest_port="$internal_port" > /dev/null 2>&1 && \
+   uci set firewall.@redirect[-1].proto="$protocols" > /dev/null 2>&1 && \
+   uci commit firewall > /dev/null 2>&1; then
+    # Success response
+    echo '{"status":"success","message":"Rule added successfully"}'
+else
+    # Error response
+    echo '{"status":"error","message":"Failed to add port forwarding rule"}'
+fi

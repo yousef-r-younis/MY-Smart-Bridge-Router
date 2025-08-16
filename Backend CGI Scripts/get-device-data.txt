@@ -1,0 +1,49 @@
+#!/bin/sh
+echo "Content-Type: application/json"
+echo ""
+
+# Get bandwidth statistics for br-lan interface
+get_bandwidth_stats() {
+    local interface="br-lan"
+    local stats_file="/proc/net/dev"
+
+    # Get current stats
+    local rx_bytes=$(grep "$interface" "$stats_file" | awk '{print $2}')
+    local rx_packets=$(grep "$interface" "$stats_file" | awk '{print $3}')
+    local tx_bytes=$(grep "$interface" "$stats_file" | awk '{print $10}')
+    local tx_packets=$(grep "$interface" "$stats_file" | awk '{print $11}')
+
+    # Convert to MB
+    local rx_mb=$(awk "BEGIN {printf \"%.2f\", $rx_bytes/1048576}")
+    local tx_mb=$(awk "BEGIN {printf \"%.2f\", $tx_bytes/1048576}")
+
+    # Get current rate by taking two samples
+    local sample_interval=1
+    local rx_bytes_before=$rx_bytes
+    local tx_bytes_before=$tx_bytes
+
+    sleep $sample_interval
+
+    local rx_bytes_after=$(grep "$interface" "$stats_file" | awk '{print $2}')
+    local tx_bytes_after=$(grep "$interface" "$stats_file" | awk '{print $10}')
+
+    local rx_rate=$(awk "BEGIN {printf \"%.2f\", ($rx_bytes_after-$rx_bytes_before)/$sample_interval/1024}")
+    local tx_rate=$(awk "BEGIN {printf \"%.2f\", ($tx_bytes_after-$tx_bytes_before)/$sample_interval/1024}")
+
+    # Output JSON
+    echo "{"
+    echo "  \"download\": {"
+    echo "    \"total\": \"$rx_mb MB\","
+    echo "    \"packets\": \"$rx_packets\","
+    echo "    \"rate\": \"$rx_rate KB/s\""
+    echo "  },"
+    echo "  \"upload\": {"
+    echo "    \"total\": \"$tx_mb MB\","
+    echo "    \"packets\": \"$tx_packets\","
+    echo "    \"rate\": \"$tx_rate KB/s\""
+    echo "  }"
+    echo "}"
+}
+
+# Run the function
+get_bandwidth_stats

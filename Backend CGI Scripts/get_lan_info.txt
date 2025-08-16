@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Set content type
+echo "Content-Type: application/json"
+echo ""
+
+# Collect LAN info from UCI
+LAN_IP=$(uci get network.lan.ipaddr 2>/dev/null)
+LAN_SUBNET=$(uci get network.lan.netmask 2>/dev/null)
+DHCP_START=$(uci get dhcp.lan.start 2>/dev/null)
+DHCP_LIMIT=$(uci get dhcp.lan.limit 2>/dev/null)
+
+# Calculate DHCP end address (assuming /24 subnet for simplicity)
+IFS='.' read -r o1 o2 o3 o4 <<EOF
+$LAN_IP
+EOF
+
+DHCP_END_OCTET=$((DHCP_START + DHCP_LIMIT - 1))
+[ $DHCP_END_OCTET -gt 254 ] && DHCP_END_OCTET=254
+DHCP_END="$o1.$o2.$o3.$DHCP_END_OCTET"
+
+# Output JSON
+cat <<EOF
+{
+    "ip": "$LAN_IP",
+    "subnet": "$LAN_SUBNET",
+    "dhcp_start": "$o1.$o2.$o3.$DHCP_START",
+    "dhcp_end": "$DHCP_END"
+}
+EOF

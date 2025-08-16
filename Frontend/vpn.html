@@ -1,0 +1,1309 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPN Shield - Modern VPN Web App</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color-light: #00C853;
+            --primary-color-dark: #00E5B9;
+            --secondary-color-light: #2196F3;
+            --secondary-color-dark: #8A2BE2;
+            --connected-color-light: #00C853;
+            --connected-color-dark: #00BFA5;
+            --disconnected-color-light: #FF4444;
+            --disconnected-color-dark: #FF0000;
+            --background-light: #E8F4F8;
+            --background-dark: #121212;
+            --card-light: #ffffff;
+            --card-dark: #1A1A1A;
+            --text-light: #000000;
+            --text-dark: #ffffff;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.2);
+            --transition-speed: 0.5s;
+            --disconnected-gradient: linear-gradient(45deg, #FF4444, #FF0000);
+            --connected-gradient: linear-gradient(45deg,
+                    var(--connected-color-light) 0%,
+                    #00E676 50%,
+                    var(--connected-color-dark) 100%);
+            --disconnected-gradient: linear-gradient(45deg,
+                    #FF5252 0%,
+                    var(--disconnected-color-light) 50%,
+                    var(--disconnected-color-dark) 100%);
+            --gradient-light: linear-gradient(45deg, #2196F3, #E91E63);
+            --gradient-dark: linear-gradient(45deg, #00E5B9, #8A2BE2);
+            --text-gradient-dark: linear-gradient(45deg, #00E676, #00BFA5);
+            --text-gradient-light: linear-gradient(45deg, #FF5252, #FF1744);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-light);
+            color: var(--text-light);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body.dark-mode {
+            background-color: var(--background-dark);
+            color: var(--text-dark);
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes rotateTheme {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            /* Reduced from 1200px for better readability */
+            width: 100%;
+            padding: 20px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: transparent;
+        }
+
+        .back-button,
+        .theme-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .back-button:hover,
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 auto;
+        }
+
+        .back-button {
+            margin-right: auto;
+        }
+
+        .theme-toggle {
+            margin-left: auto;
+        }
+
+        .logo-icon {
+            font-size: 38px;
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rotate 10s linear infinite;
+        }
+
+        .theme-toggle {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle i {
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle.rotating i {
+            animation: rotateTheme 0.5s ease-in-out;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .app-title {
+            font-size: 38px;
+            font-weight: 700;
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
+        .app-title,
+        .logo-icon {
+            font-size: 38px;
+            font-weight: 700;
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode .app-title,
+        body.dark-mode .logo-icon {
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.vpn-disconnected.dark-mode .app-title,
+        body.vpn-disconnected.dark-mode .logo-icon {
+            background: var(--text-gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode .app-title,
+        body.light-mode .logo-icon {
+            background: var(--text-gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode:not(.vpn-disconnected) .app-title,
+        body.light-mode:not(.vpn-disconnected) .logo-icon {
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode.vpn-disconnected .app-title,
+        body.light-mode.vpn-disconnected .logo-icon {
+            background: var(--text-gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.vpn-disconnected .app-title,
+        body.vpn-disconnected .logo-icon {
+            background: var(--text-gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.dark-mode:not(.vpn-disconnected) .app-title,
+        body.dark-mode:not(.vpn-disconnected) .logo-icon {
+            background: var(--text-gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .connected-gradient {
+            background: var(--connected-gradient);
+            transition: all 0.3s ease;
+        }
+
+        .disconnected-gradient {
+            background: var(--disconnected-gradient);
+            transition: all 0.3s ease;
+        }
+
+        .connected-gradient:hover {
+            filter: brightness(1.1);
+        }
+
+        .disconnected-gradient:hover {
+            filter: brightness(1.1);
+        }
+
+        .primary-gradient {
+            background-image: linear-gradient(to bottom right, var(--primary-color-light), var(--secondary-color-light));
+        }
+
+        .dark-mode .primary-gradient {
+            background-image: linear-gradient(to bottom right, var(--primary-color-dark), var(--secondary-color-dark));
+        }
+
+        .status-card {
+            width: 100%;
+            margin-bottom: 24px;
+            padding: 24px;
+            border-radius: 24px;
+            margin-top: 8px;
+            color: white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            height: 100%;
+            grid-column: span 2;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: white;
+            box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .status-label {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.24);
+            margin: 16px 0;
+        }
+
+        .ip-info-container {
+            display: flex;
+            gap: 24px;
+        }
+
+        .ip-info,
+        .stat-info {
+            flex: 1;
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .info-subvalue {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 4px;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .card {
+            width: 100%;
+            margin-bottom: 24px;
+            background-color: var(--card-light);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 0;
+            box-shadow: 0 4px 10px var(--shadow-light);
+            transition: background-color var(--transition-speed), box-shadow var(--transition-speed), transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .card {
+            background-color: var(--card-dark);
+            box-shadow: 0 4px 10px var(--shadow-dark);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+
+        .server-select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 200, 83, 0.5);
+            background-color: transparent;
+            font-size: 16px;
+            margin-bottom: 18px;
+            cursor: pointer;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 16px center !important;
+            background-size: 16px !important;
+            padding-right: 48px !important;
+            transition: all 0.3s ease;
+            color: #000000 !important;
+            /* Force white text in dark mode for the selected option */
+        }
+
+        .light-mode .server-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E%3C/svg%3E") !important;
+            border-color: rgba(0, 0, 0, 0.2);
+            color: #000000 !important;
+            background-repeat: no-repeat !important;
+            background-position: right 16px center !important;
+            background-size: 16px !important;
+            /* Black text in light mode */
+
+        }
+
+        .dark-mode .server-select {
+            color: #ffffff !important;
+            /* Ensure white text in dark mode */
+        }
+
+        /* Remove duplicate option styles */
+        .server-select option {
+            background-color: #ffffff;
+            color: #0052B4; /* Default blue */
+            padding: 12px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .server-select option {
+            background-color: #1A1A1A; /* Dark background in dark mode */
+            color: #ffffff; /* White text in dark mode */
+        }
+
+        /* Keep the country-specific colors */
+        .server-select option[value="United States"] {
+            color: #0052B4; /* USA - Blue */
+        }
+
+        .server-select option[value="Japan"] {
+            color: #BC002D; /* Japan - Red */
+        }
+
+        .server-select option[value="Netherlands"] {
+            color: #FF6F00; /* Netherlands - Orange */
+        }
+
+        .server-select option:hover,
+        .server-select option:focus {
+            background-color: rgba(0, 229, 185, 0.2);
+        }
+
+        .light-mode .server-select option:hover,
+        .light-mode .server-select option:focus {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .server-select option:checked {
+            background-color: rgba(0, 229, 185, 0.3);
+        }
+
+        .light-mode .server-select option:checked {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+
+        .button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background-color: var(--primary-color-light);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.2s, opacity 0.2s, background-color 0.3s;
+        }
+
+        .dark-mode .button {
+            background-color: var(--primary-color-dark);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .vpn-disconnected .button {
+            background: var(--disconnected-gradient);
+            color: white;
+        }
+
+        .vpn-disconnected .server-select {
+            border-color: rgba(255, 68, 68, 0.5);
+        }
+
+        .log-container {
+            height: 160px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            display: flex;
+            padding: 8px 0;
+        }
+
+        .log-time {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.6;
+            margin-right: 16px;
+        }
+
+        .log-message {
+            font-size: 15px;
+            opacity: 0.8;
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .action-button {
+            width: 100%;
+            height: 54px;
+        }
+
+        .action-icon-button {
+            width: 60px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            opacity: 0.5;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .status-card {
+                grid-column: span 2;
+            }
+
+            .action-buttons {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 12px;
+            }
+
+            .ip-info-container,
+            .stats-container {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .action-buttons {
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card,
+            .status-card {
+                padding: 16px;
+            }
+
+            .header {
+                margin-bottom: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body style="visibility: hidden;">
+
+    <script>
+        (function checkAuth() {
+    try {
+        // Check if user is authenticated
+        const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+        const username = localStorage.getItem('username');
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        // Debug logging
+        console.log('Auth check:', { isAuthenticated, username, lastActivity });
+        
+        // Check for session timeout
+        if (lastActivity && (currentTime - parseInt(lastActivity) > 20 * 60 * 1000)) {
+            console.log('Session expired');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // If not authenticated or wrong username, redirect to login
+        if (!isAuthenticated || username !== 'root') {
+            console.log('Not authenticated, redirecting to login');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // Update last activity time
+        localStorage.setItem('lastActivity', currentTime.toString());
+        
+        // If authenticated, show settings page
+        document.body.style.visibility = 'visible';
+        console.log('Authentication successful');
+        
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.clear();
+        window.location.replace('main.html');
+    }
+})();
+
+// Session timeout handler
+const sessionManager = {
+    timeout: 20 * 60 * 1000, // 20 minutes in milliseconds
+    activityTimer: null,
+    
+    initialize() {
+        // Check if session has expired
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        if (lastActivity && (currentTime - parseInt(lastActivity) > this.timeout)) {
+            this.endSession('Session expired. Please login again.');
+            return;
+        }
+        
+        // Update last activity time
+        this.updateActivityTime();
+        
+        // Add event listeners for user activity
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, () => this.updateActivityTime());
+        });
+        
+        // Start the timer
+        this.startActivityTimer();
+    },
+    
+    updateActivityTime() {
+        localStorage.setItem('lastActivity', Date.now().toString());
+        
+        // Reset the timer
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+        }
+        this.startActivityTimer();
+    },
+    
+    startActivityTimer() {
+        this.activityTimer = setTimeout(() => {
+            this.endSession('Session timed out due to inactivity.');
+        }, this.timeout);
+    },
+    
+    endSession(message) {
+        // Clear all session data
+        localStorage.clear();
+        
+        // Show message to user
+        alert(message);
+        
+        // Redirect to login
+        window.location.replace('main.html');
+    }
+};
+
+// Initialize session management
+sessionManager.initialize();
+    </script>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="back-button disconnected-gradient">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+
+                <div class="title">
+                    <i class="fas fa-shield-alt logo-icon"></i>
+                    <h1 class="app-title">VPN Shield</h1>
+                </div>
+
+                <div class="theme-toggle disconnected-gradient" id="themeToggle">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="status-card disconnected-gradient">
+            <div class="status-header">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <div class="status-label">Unprotected</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="vpn-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="ip-info-container">
+                <div class="ip-info">
+                    <div class="info-label">
+                        <i class="fas fa-laptop"></i>
+                        Original IP
+                    </div>
+                    <div class="info-value">185.76.177.90</div>
+                </div>
+
+                <div class="ip-info">
+                    <div class="info-label">
+                        <i class="fas fa-lock"></i>
+                        VPN IP
+                    </div>
+                    <div class="info-value" id="vpn-ip">---</div>
+                    <div class="info-subvalue vpn-country"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Server Selection</h2>
+            <select class="server-select" id="server-select">
+                <option value="United States">🇺🇸 United States, New York</option>
+                <option value="Japan">🇯🇵 Japan, Tokyo</option>
+                <option value="Netherlands">🇳🇱 Netherlands, Amsterdam</option>
+            </select>
+            <button class="button" id="connect-button" disabled>
+                <i class="fas fa-link"></i>
+                Connect to Server
+            </button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Connection Log</h2>
+            <div class="log-container" id="log-container">
+                <!-- Logs will be populated by JavaScript -->
+            </div>
+        </div>
+
+
+        <div class="footer">
+            VPN Shield © 2025 - All rights reserved
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            isVPNConnected: false,
+            isConnecting: false,
+            selectedServer: "United States",
+            vpnIP: "---",
+            originalIP: "---", // Add this line
+            vpnCountry: "",
+            logs: []
+        };
+
+        // Add this new function to get the original IP
+        const ipService = {
+            async getIP() {
+                try {
+                    const response = await fetch('https://api.ipify.org?format=json');
+                    const data = await response.json();
+                    return data.ip;
+                } catch (error) {
+                    console.error('Failed to get IP:', error);
+                    return '---';
+                }
+            }
+        };
+
+        // DOM References
+        const vpnToggle = document.getElementById('vpn-toggle');
+        const serverSelect = document.getElementById('server-select');
+        const connectButton = document.getElementById('connect-button');
+      
+        const backButton = document.querySelector('.back-button');
+        const statusCard = document.querySelector('.status-card');
+        const statusDot = document.querySelector('.status-dot');
+        const statusLabel = document.querySelector('.status-label');
+        const vpnCountryElement = document.querySelector('.vpn-country');
+        const logContainer = document.getElementById('log-container');
+
+        // Initialize UI
+        async function initUI() {
+            // Get and set the original IP
+            const originalIP = await ipService.getIP();
+            state.originalIP = originalIP;
+            document.querySelector('.ip-info .info-value').textContent = originalIP;
+            
+            // Rest of the initialization
+            refreshLogs();
+            updateStatusCard();
+            serverSelect.value = state.selectedServer;
+        }
+
+        // Handle VPN toggle
+        vpnToggle.addEventListener('change', () => {
+            const selectedServer = serverSelect.value;
+            const serverName = selectedServer.split(' ')[0]; // Get first word of server name
+            vpnController.toggleVPN(vpnToggle.checked, serverName);
+        });
+
+        // Handle Server Selection
+        serverSelect.addEventListener('change', () => {
+            state.selectedServer = serverSelect.value;
+        });
+
+        // Handle Connect Button
+        connectButton.addEventListener('click', () => {
+            const selectedServer = serverSelect.value;
+            vpnController.switchServer(selectedServer);
+        });
+
+        // Handle Theme Toggle with rotation animation
+        themeToggle.addEventListener('click', () => {
+            // Add rotating class for animation
+            themeToggle.classList.add('rotating');
+
+            // Change theme after a small delay to let animation start
+            setTimeout(() => {
+                state.isDarkMode = !state.isDarkMode;
+                document.body.classList.toggle('dark-mode', state.isDarkMode);
+                themeIcon.className = state.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+
+                // Update gradient colors for buttons
+                updateStatusCard();
+
+                // Remove the rotating class after animation completes
+                setTimeout(() => {
+                    themeToggle.classList.remove('rotating');
+                }, 500);
+            }, 50);
+        });
+
+        // Handle Back Button
+        backButton.addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Update Status Card
+        function updateStatusCard() {
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (state.isVPNConnected) {
+                statusCard.className = 'status-card connected-gradient';
+                backButton.className = 'back-button connected-gradient';
+                themeToggle.className = 'theme-toggle connected-gradient' + (themeToggle.classList.contains('rotating') ? ' rotating' : '');
+                statusLabel.textContent = 'Protected';
+                vpnCountryElement.textContent = state.vpnCountry;
+                document.getElementById('vpn-ip').textContent = state.vpnIP;
+                document.body.classList.remove('vpn-disconnected');
+            } else {
+                statusCard.className = 'status-card disconnected-gradient';
+                backButton.className = 'back-button disconnected-gradient';
+                themeToggle.className = 'theme-toggle disconnected-gradient' + (themeToggle.classList.contains('rotating') ? ' rotating' : '');
+                statusLabel.textContent = 'Unprotected';
+                vpnCountryElement.textContent = '';
+                document.getElementById('vpn-ip').textContent = '---';
+                document.body.classList.add('vpn-disconnected');
+            }
+        }
+
+        // Update Connection Buttons
+        function updateConnectionButtons() {
+            connectButton.disabled = !state.isVPNConnected;
+        }
+
+        // Update Connect Button
+        function updateConnectButton() {
+            if (state.isConnecting) {
+                connectButton.innerHTML = '<div class="loader"></div> Connecting...';
+            } else {
+                connectButton.innerHTML = '<i class="fas fa-link"></i> Connect to Server';
+            }
+        }
+
+        // Get current time for logs
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        // Add log entry
+        function addLog(time, message) {
+            state.logs.unshift({ time, message });
+            if (state.logs.length > 10) {
+                state.logs.pop();
+            }
+            refreshLogs();
+        }
+
+        // Refresh logs display
+        function refreshLogs() {
+            logContainer.innerHTML = '';
+            state.logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+
+                const logTime = document.createElement('div');
+                logTime.className = 'log-time';
+                logTime.textContent = log.time;
+
+                const logMessage = document.createElement('div');
+                logMessage.className = 'log-message';
+                logMessage.textContent = log.message;
+
+                logEntry.appendChild(logTime);
+                logEntry.appendChild(logMessage);
+                logContainer.appendChild(logEntry);
+            });
+        }
+
+        // Initialize UI and Theme
+        document.addEventListener('DOMContentLoaded', async () => {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            // Set initial theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.classList.toggle('light-mode', savedTheme === 'light');
+            document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+            themeIcon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            
+            // Remove existing click listeners
+            themeToggle.replaceWith(themeToggle.cloneNode(true));
+            
+            // Get fresh references after replacing
+            const newThemeToggle = document.getElementById('themeToggle');
+            const newThemeIcon = document.getElementById('theme-icon');
+            
+            // Add single click handler
+            newThemeToggle.addEventListener('click', () => {
+                newThemeToggle.classList.add('rotating');
+                
+                const isCurrentlyLight = document.body.classList.contains('light-mode');
+                const newTheme = isCurrentlyLight ? 'dark' : 'light';
+                
+                document.body.classList.toggle('light-mode');
+                document.body.classList.toggle('dark-mode');
+                newThemeIcon.className = newTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+                
+                localStorage.setItem('theme', newTheme);
+                updateStatusCard();
+                
+                setTimeout(() => {
+                    newThemeToggle.classList.remove('rotating');
+                }, 500);
+            });
+            
+            // Initialize UI and status - now with await since initUI is async
+            await initUI();
+            updateStatusCard();
+            vpnController.checkStatus();
+        });
+
+        // Replace the existing vpnController with this version:
+
+const vpnController = {
+    mockServer: false,
+
+    async getVPNIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error('Failed to get VPN IP:', error);
+            return '---';
+        }
+    },
+
+    async toggleVPN(enable, server) {
+        try {
+            state.isConnecting = true;
+            updateConnectButton();
+
+            if (enable) {
+                // Map server names to script endpoints
+                const serverScripts = {
+                    'Japan': 'japan-server',
+                    'United States': 'usa-server',
+                    'Netherlands': 'netherland-server'
+                };
+
+                // Get the selected server from the dropdown
+                const selectedServer = serverSelect.value;
+                const scriptName = serverScripts[selectedServer];
+                
+                if (!scriptName) {
+                    throw new Error('Invalid server selection');
+                }
+
+                // Connect to the selected server
+                const response = await fetch(`/cgi-bin/${scriptName}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/plain'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                // Wait for VPN connection to establish
+                await new Promise(resolve => setTimeout(resolve, 4000));
+
+                // Update state and UI
+                state.isVPNConnected = true;
+                state.selectedServer = selectedServer;
+                state.vpnIP = await this.getVPNIP();
+                state.vpnCountry = selectedServer;
+                
+                const currentTime = getCurrentTime();
+                addLog(currentTime, `Connected to ${selectedServer} server`);
+                
+                document.body.classList.remove('vpn-disconnected');
+            } else {
+                // Kill existing VPN connection
+                const response = await fetch('/cgi-bin/vpn-kill', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/plain'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to disconnect: ${response.statusText}`);
+                }
+
+                // Wait for VPN to disconnect
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Update state and UI
+                state.isVPNConnected = false;
+                state.vpnIP = '---';
+                state.vpnCountry = '';
+                
+                const currentTime = getCurrentTime();
+                addLog(currentTime, 'Disconnected from VPN');
+                document.body.classList.add('vpn-disconnected');
+            }
+
+            // Update UI
+            updateStatusCard();
+            updateConnectionButtons();
+
+        } catch (error) {
+            console.error('VPN toggle error:', error);
+            vpnToggle.checked = !enable;
+            alert(`Failed to ${enable ? 'connect to' : 'disconnect from'} VPN: ${error.message}`);
+        } finally {
+            state.isConnecting = false;
+            updateConnectButton();
+        }
+    },
+
+    async switchServer(selectedServer) {
+        try {
+            state.isConnecting = true;
+            updateConnectButton();
+
+            // Map server names to script endpoints
+            const serverScripts = {
+                'Japan': 'japan-server',
+                'United States': 'usa-server',
+                'Netherlands': 'netherland-server'
+            };
+
+            const scriptName = serverScripts[selectedServer];
+            if (!scriptName) {
+                throw new Error('Invalid server selection');
+            }
+
+            const response = await fetch(`/cgi-bin/${scriptName}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // Wait for VPN connection to establish
+            await new Promise(resolve => setTimeout(resolve, 4000));
+
+            // Update state and UI
+            state.selectedServer = selectedServer;
+            state.vpnIP = await this.getVPNIP();
+            state.vpnCountry = selectedServer;
+            
+            const currentTime = getCurrentTime();
+            addLog(currentTime, `Switched to ${selectedServer} server`);
+            
+            // Update UI to show connected state with new server
+            document.body.classList.remove('vpn-disconnected');
+            updateStatusCard();
+
+        } catch (error) {
+            console.error('Server switch error:', error);
+            alert(`Failed to switch to ${selectedServer} server: ${error.message}`);
+        } finally {
+            state.isConnecting = false;
+            updateConnectButton();
+        }
+    },
+
+    async checkStatus() {
+        try {
+            // Check if VPN is running
+            const response = await fetch('/cgi-bin/vpn_status', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const text = await response.text();
+            const isRunning = text.includes('VPN is running');
+            state.isVPNConnected = isRunning;
+            vpnToggle.checked = isRunning;
+            
+            if (isRunning) {
+                // Parse the connected server info
+                const serverMatch = text.match(/Connected to: (.+)\.conf/);
+                if (serverMatch) {
+                    const serverConfig = serverMatch[1];
+                    // Map config names to server display names
+                    const serverMap = {
+                        'japan': 'Japan',
+                        'usa': 'United States',
+                        'neth': 'Netherlands'
+                    };
+                    
+                    // Update state and UI with correct server
+                    state.selectedServer = serverMap[serverConfig];
+                    state.vpnCountry = serverMap[serverConfig];
+                    serverSelect.value = serverMap[serverConfig];
+                    
+                    // Enable connect button and update UI
+                    connectButton.disabled = false;
+                    document.body.classList.remove('vpn-disconnected');
+                    state.vpnIP = await this.getVPNIP();
+                }
+            } else {
+                // If VPN is not running, show as disconnected
+                connectButton.disabled = true;
+                document.body.classList.add('vpn-disconnected');
+                state.vpnIP = '---';
+                state.vpnCountry = '';
+                state.selectedServer = 'United States'; // Reset to default
+            }
+            
+            updateStatusCard();
+            updateConnectionButtons();
+
+        } catch (error) {
+            console.error('Status check error:', error);
+            state.isVPNConnected = false;
+            vpnToggle.checked = false;
+            document.body.classList.add('vpn-disconnected');
+            updateStatusCard();
+        }
+    }
+};
+
+    </script>
+</body>
+
+</html>
