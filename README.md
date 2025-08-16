@@ -5,9 +5,9 @@ An **OpenWrt-based smart travel router** built on a Raspberry Pi 4, providing **
 This project was developed as a **Senior Project** at the **Lebanese International University (LIU), School of Engineering** under the supervision of Dr. Abdel-Mehsen Ahmad.  
 
 ## Authors
-
 **Moayad K. Salloum** – @Moayad717
 **Yousef R. Younis** – @yousef.r.younis
+
 ---
 
 ## Key Features
