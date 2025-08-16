@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css2/all.min.css">
+
+<style>
+
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        width: 420px;
+        height: auto;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
+
+    .login-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .login-container h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 38px;
+        font-weight: bold;
+        background: var(--dark-title);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .mui-router-icon {
+        fill: var(--dark-router-icon);
+        transition: transform 0.3s ease;
+    }
+
+    .mui-router-icon:hover {
+        transform: rotate(7deg);
+    }
+
+    .form-group {
+        width: 100%;
+        margin-bottom: 3px;
+        background-color:transparent;
+        animation: fadeIn 0.5s ease-in-out;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 15px;
+        background-color: transparent;
+        color: var(--dark-input);
+        border: 2px solid var(--dark-border);
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease, outline 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--dark-border-focus);
+        box-shadow: 0 0 10px rgba(164, 25, 61, 0.5);
+        &::placeholder {
+            color: var(--dark-placeholder-focus);
+        }
+    }
+
+    ::placeholder {
+        color: var(--dark-placeholder);
+        opacity: 0.9;
+        font-style: italic;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .password-container {
+        position: relative;
+    }
+
+    .password-container i {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: pointer;
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        background-color: var(--dark-button-background);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        animation: fadeIn 0.5s ease forwards;
+        animation-delay: 0.2s;
+        margin-top: 7px;
+        box-shadow: 0 4px 10px rgba(164, 25, 61, 0.5);
+        box-sizing: border-box;
+    }
+
+    button:hover {
+        background-color: var(--dark-button-background-hover);
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(164, 25, 61, 1.0);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .error-message {
+       display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(220, 53, 69, 0.95);
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        animation: slideIn 0.5s ease-out;
+        z-index: 1000;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes success {
+    0% {
+        width: 100%;
+        background-color: #A4193D;
+        color: white;
+        border-radius: 8px;
+        font-size: 16px;
+        position: absolute;
+        top: 100%;
+        align-self: center;
+    }
+    10% {
+        width: 90%;
+        background-color: #A4193D;
+        color: #ffd779;
+        border-radius: 10px;
+        font-size: 16.5px;
+        position: absolute;
+        top: 90%;
+        align-self: center;
+    }
+    20% {
+        width: 80%;
+        background-color: #A4193D;
+        color: #ffd779;
+        border-radius: 12px;
+        font-size: 17px;
+        position: absolute;
+        top: 80%;
+        align-self: center;
+    }
+    30% {
+        width: 70%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 14px;
+        font-size: 17.5px;
+        position: absolute;
+        top: 70%;
+        align-self: center;
+    }
+    40% {
+        width: 60%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 16px;
+        font-size: 18px;
+        position: absolute;
+        top: 60%;
+        align-self: center;
+    }
+    50% {
+        width: 55%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 18px;
+        font-size: 18.5px;
+        position: absolute;
+        top: 50%;
+        align-self: center;
+    }
+    60% {
+        width: 50%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 20px;
+        font-size: 19px;
+        position: absolute;
+        top: 40%;
+        align-self: center;
+    }
+    70% {
+        width: 47%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 22px;
+        font-size: 19.5px;
+        position: absolute;
+        top: 30%;
+        align-self: center;
+    }
+    80% {
+        width: 45%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 23px;
+        font-size: 19.7px;
+        position: absolute;
+        top: 20%;
+        align-self: center;
+    }
+    90% {
+        width: 45%;
+        background-color: rgba(121, 13, 27, 0.95);
+        color: #ffd779;
+        border-radius: 24px;
+        font-size: 19.8px;
+        position: absolute;
+        top: 15%;
+        align-self: center;
+    }
+    100% {
+        width: 45%;
+        color: #ffd779;
+        font-size: 20px;
+        text-align: center;
+        border: 2px solid #ffd779;
+        border-radius: 25px;
+        background-color: rgba(121, 13, 27, 0.95);
+        position: absolute;
+        top: 10%;
+        align-self: center;
+    }
+}
+
+
+    body {
+        font-family: Arial, sans-serif;
+        min-height: 100vh;
+    }
+
+    @media (max-width: 600px) {
+        .login-container {
+            width: 90%;
+            padding: 20px;
+        }
+        .login-header h1 {
+            font-size: 32px;
+        }
+    }
+
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="error-message">Invalid Credentials</div>
+       <div class="login-header">
+            <svg loading="lazy" class="mui-router-icon" viewBox="0 0 24 24" width="64" height="64">
+                        <path d="M20.2 5.9l.8-.8C19.6 3.7 17.8 3 16 3s-3.6.7-5 2.1l.8.8C13 4.8 14.5 4.2 16 4.2s3 .6 4.2 1.7zm-.9.8c-.9-.9-2.1-1.4-3.3-1.4s-2.4.5-3.3 1.4l.8.8c.7-.7 1.6-1 2.5-1s1.8.3 2.5 1l.8-.8zM19 13h-2V9h-2v4H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zM8 18H6v-2h2v2zm3.5 0h-2v-2h2v2zm3.5 0h-2v-2h2v2z"></path>
+            </svg>
+            <h1>MY Smart Router</h1>
+        </div>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username" name="username">
+                <div class="password-container">
+                    <input type="password" id="password" placeholder="Password" name="password">
+                    <i id="visibility" onclick = "toggleVisibility()">🙈</i>
+                </div>
+                <button id="loginButton" onclick="login()">Login <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+
+            </div>
+    </div>
+
+    <script type="module" src="js/Main.js"></script>
+</body>
+</html>

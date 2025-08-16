@@ -1,0 +1,27 @@
+        option src 'lan'
+        option dest_port '3000'
+        option target 'ACCEPT'
+
+config zone
+        option name 'guest'
+        option input 'REJECT'
+        option output 'ACCEPT'
+        option forward 'REJECT'
+        list network 'guest'
+
+config forwarding
+        option src 'guest'
+        option dest 'wan'
+
+config rule
+        option name 'Allow-DNS-Guest'
+        option src 'guest'
+        option dest_port '53'
+        option target 'ACCEPT'
+
+config rule
+        option name 'Allow-DHCP-Guest'
+        list proto 'udp'
+        option src 'guest'
+        option dest_port '67'
+        option target 'ACCEPT'

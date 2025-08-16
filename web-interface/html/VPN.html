@@ -1,0 +1,172 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPN</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css2/all.min.css">
+
+    <style>
+
+        .app-title {
+            font-size: 47px;
+            font-weight: bold;
+            background: var(--vpn-off-background);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .app-title i {
+            transition: text-shadow 0.3s ease;
+        }
+
+        .app-title i:hover {
+            text-shadow: 0 0 10px var(--dark-shadow),
+                         0 0 20px var(--dark-shadow),
+                         0 0 40px var(--dark-shadow);
+        }
+
+        .vpn-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            gap: 20px;
+            height: 130px;
+            background: var(--vpn-off-background);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 10px var(--dark-shadow);
+            transition: background-color var(--transition-speed), box-shadow var(--transition-speed), transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .vpn-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 20px;
+        }
+
+        .vpn-content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .info-label {
+            display: flex;
+            flex-direction: column;
+            align-items: self-start;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: bold;
+        }
+
+        .vpn-stat {
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .server-card {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: center;
+            gap: 20px;
+            background-color: var(--dark-container-background);
+            border-radius: 20px;
+            border: 2px solid var(--dark-border);
+            padding: 20px;
+            box-shadow: 0 0px 20px var(--dark-shadow);
+        }
+
+        .server-card h2 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .server-select {
+            font-size: 16px;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+
+        .server-select option[value = "United States"] {
+            color: #0015ff;
+        }
+
+        .server-select option[value = "Japan"] {
+            color: #BC002D;
+        }
+
+        .server-select option[value = "Netherlands"] {
+            color: #FF6F00;
+        }
+
+
+        .connect-button {
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        .footer {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <header class="title-container">
+            <button class="back-button" onclick="window.location.href = 'Dashboard.html';"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="app-title"><i class="fa fa-shield-alt"></i>VPN</div>
+            <button class="moon"></button>
+        </header>
+
+
+        <div class="vpn-card">
+            <header class="vpn-header">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <div class="vpn-status">Unprotected</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="vpn-toggle" onclick="toggleVPN()">
+                    <span class="slider"></span>
+                </label>
+            </header>
+            <div class="divider"></div>
+            <div class="vpn-content">
+                    <div class="info-label"><span>Server:</span><span class="vpn-stat" id="server-name">--</span></div>
+                    <div class="info-label"><span>VPN IP:</span><span class="vpn-stat" id="vpn-ip">--</span></div>
+                    <div class="info-label"><span>Original IP:</span><span class="vpn-stat" id="original-ip">--</span></div>
+            </div>
+        </div>
+
+        <div class="server-card">
+            <h2>Server Selection</h2>
+            <select class="server-select">
+                <option value="United States">🇺🇸 United States, New York</option>
+                <option value="Japan">🇯🇵 Japan, Tokyo</option>
+                <option value="Netherlands">🇳🇱 Netherlands, Amsterdam</option>
+            </select>
+            <button class="connect-button" onclick="connectToServer()">Connect to Server <i class="fa fa-link"></i></button>
+        </div>
+        <p class="footer">VPN Shield © 2025 - All rights reserved</p>
+    </div>
+
+
+    <script type="module" src="js/VPN.js"></script>
+</body>
+</html>

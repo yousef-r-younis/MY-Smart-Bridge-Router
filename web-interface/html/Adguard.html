@@ -1,0 +1,387 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parental Controls</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css2/all.min.css">
+
+<style>
+
+    .adg-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .adg-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+    }
+
+    .info-label {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--dark-shadow);
+        text-wrap: nowrap;
+    }
+
+    .Rule-card {
+        background-color: var(--dark-container-background);
+        border-radius: 8px;
+        border: 2px solid var(--dark-border);
+        box-shadow: 0px 3px 18px var(--dark-shadow);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .Rule-card header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tooltip {
+    position: relative;
+    cursor: help;
+    }
+
+    .tooltip-text {
+        position: absolute;
+        bottom: 130%;
+        background-color: rgba(0, 0, 0, 1);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 2px dashed var(--dark-border);
+        font-size: 13px;
+        font-weight: normal;
+        white-space: nowrap;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 1001;
+        width: 220px;
+        white-space: normal;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 8px solid transparent;
+        border-top-color: rgba(0, 0, 0, 0.9);
+    }
+
+    .tooltip:hover .tooltip-text {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .addRule-card {
+        background-color: var(--dark-container-background);
+        border-radius: 8px;
+        border: 3px dotted var(--dark-border);
+        padding: 20px;
+        display: none;
+        flex-direction: column;
+        gap: 15px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+
+    .addRule-card header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .fa-times {
+        cursor: pointer;
+    }
+
+    .domain-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .domain-input button {
+        padding: 10px 10px;
+    }
+
+    .domain-input input {
+        flex: 1;
+    }
+
+    .domain-list {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .domain-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border: 2px solid var(--dark-border);
+        border-radius: 15px;
+        background-color: var(--dark-container-background);
+    }
+    .time-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    }
+
+    .time-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .time-input input {
+        flex: 1;
+    }
+
+    .query-card {
+        background-color: var(--dark-container-background);
+        border: 2px solid var(--dark-border);
+        border-radius: 10px;
+        box-shadow: 0px 3px 18px var(--dark-shadow);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .query-card header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .query-card header span {
+        display: flex;
+        gap: 10px;
+    }
+
+    .query-card header button {
+        padding: 5px 10px;
+        transition: background-color 0.1s ease, transform 0.1s ease;
+    }
+
+    .query-card header button:hover {
+        transform: translateY(-3px);
+        background-color: var(--dark-button-background-hover);
+    }
+
+    .query-card header button:active {
+        transform: translateY(1px);
+        background-color: var(--dark-button-background-active);
+    }
+
+    .query-section {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        max-height: 70vh;
+        overflow: auto;
+        border-radius: 8px;
+        border: 3px solid var(--dark-border);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .query-list {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .query-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        border: 1px solid var(--dark-border);
+        background-color: var(--dark-container-background);
+    }
+
+    .query-item span {
+        display: flex;
+        gap: 10px;
+    }
+
+    .query-item strong {
+        color: orange;
+    }
+</style>
+
+</head>
+<body>
+
+    <div class="container">
+
+        <header class="title-container">
+            <button class="back-button" onclick="window.location.href = 'Dashboard.html';"><i class="fas fa-arrow-left"></i></button>
+            <h1 class="title">Parental Controls</h1>
+            <button class="moon"></button>
+        </header>
+
+        <div class="card">
+            <header class="adg-header">
+                <h2><i class="fa fa-user-secret"></i> AdBlock <i class="fa fa-shield-virus"></i></h2>
+                <label class="switch">
+                    <input type="checkbox" id="adg-toggle" onclick="toggleAdg()">
+                    <span class="slider"></span>
+                </label>
+            </header>
+
+            <div class="divider"></div>
+
+            <div class="adg-content">
+                <div class="info-label"><span>Total Queries</span><span class="adg-stat" id="adg-totalQueries">--</span></div>
+                <div class="info-label"><span>Blocked Queries</span><span class="adg-stat" id="adg-blockedQueries">--</span></div>
+                <div class="info-label"><span>Blocked Adult Contents</span><span class="adg-stat" id="adg-blockedAdult">--</span></div>
+                <div class="info-label"><span>Blocked Rate</span><span class="adg-stat" id="adg-blockRate">--</span></div>
+            </div>
+        </div>
+
+        <div class="Rule-card">
+            <header>
+                <h2>Custom Domain Rules</h2>
+                <div class="info-label tooltip">
+                    <i class="fa fa-circle-info"></i>
+                    <span class="tooltip-text">Block a domain and write its URL. (e.g., example.com)</span>
+                </div>
+            </header>
+
+            <button class="add-rule-button" onclick="openAddRule('addDomainRule-card')"><i class="fa fa-plus"></i> Add Rule</button>
+
+            <div class="addRule-card" id="addDomainRule-card">
+                <header>
+                    <h2>Add Domain Filter Rule</h2>
+                    <i class="fa fa-times" onclick="closeAddRule('addDomainRule-card')"></i>
+                </header>
+
+                <h4>Choose Device</h4>
+                <select class="device_selector">
+                    <option value="all">All</option>
+                </select>
+
+                <h4>Block a domain and write its URL. (e.g., example.com)</h4>
+                <span class="domain-input">
+                    <input type="text" id="custom-rule" placeholder="example.com">
+                    <button onclick="addToList()"><i class="fa fa-plus"></i></button>
+                </span>
+
+                <div class="domain-list"></div>
+
+                <div class="time-section">
+                    <header>
+                        <h4>Time Schedule</h4>
+                        <label class="switch">
+                            <input type="checkbox" id="schedule-toggle" onclick="toggleSchedule()">
+                            <span class="slider"></span>
+                        </label>
+                    </header>
+
+                    <span class="time-input" style="display: none;">
+                        <h5>From</h5>
+                        <input type="time" id="time_start" placeholder="Start Time">
+                        <h5>To</h5>
+                        <input type="time" id="time_end" placeholder="End Time">
+                    </span>
+                </div>
+
+                <button onclick="addDomainRule()"><i class="fa fa-plus"></i> Add Rule</button>
+            </div>
+            <div class="rule-list"></div>
+        </div>
+
+        <div class="Rule-card" >
+            <header>
+                <h2>Internet Rules</h2>
+                <div class="info-label tooltip">
+                    <i class="fa fa-circle-info"></i>
+                    <span class="tooltip-text">Block internet access for selected devices during specific time periods.</span>
+                </div>
+            </header>
+            <button class="add-rule-button" onclick="openAddRule('addAccessRule-card')"><i class="fa fa-plus"></i> Add Rule</button>
+
+            <div class="addRule-card" id="addAccessRule-card">
+                <header>
+                    <h2>Add Internet Access Rule</h2>
+                    <i class="fa fa-times" onclick="closeAddRule('addAccessRule-card')"></i>
+                </header>
+
+                <h4>Choose Device</h4>
+                <select class="device-selector">
+                    <option value="all">All</option>
+                </select>
+
+                <div class="time-section">
+
+                    <h4>Time Schedule</h4>
+
+                    <span class="time-input">
+                        <h5>From</h5>
+                        <input type="time" id="time-start" placeholder="Start Time">
+                        <h5>To</h5>
+                        <input type="time" id="time-end" placeholder="End Time">
+                    </span>
+                </div>
+
+                <button onclick="addAccessRule()"><i class="fa fa-plus"></i> Add Rule</button>
+            </div>
+            <div class="rule-list"></div>
+        </div>
+
+        <div class="Query-card">
+            <header>
+                <h2>Query Log</h2>
+                <span>
+                    <button onclick="sortQueries()"><i class="fa fa-sort"></i> Sort</button>
+                    <button onclick="RefreshQueryLog()"><i class="fa fa-arrows-rotate"></i> Refresh</button>
+                </span>
+            </header>
+
+
+            <div class="query-section" style="flex-direction: column;">
+            </div>
+        </div>
+
+        <div class="notification-popup" id="notification-popup">
+            <h2 id="notification-message"></h2>
+        </div>
+
+    </div>
+
+
+
+    <script type = "module" src="js/Adguard.js"></script>
+</body>
+</html>

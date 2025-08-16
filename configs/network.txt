@@ -1,0 +1,27 @@
+
+config interface 'lan'
+        option device 'br-lan'
+        option proto 'static'
+        option ipaddr '70.70.70.1'
+        option netmask '255.255.255.0'
+        option ip6assign '60'
+        option dns '70.70.70.1'
+
+config interface 'wwan'
+        option proto 'dhcp'
+
+config interface 'vpnclient'
+        option proto 'none'
+        option device 'tun0'
+
+config device
+        option type 'bridge'
+        option name 'br-guest'
+        option bridge_empty '1'
+
+config interface 'guest'
+        option proto 'static'
+        option device 'br-guest'
+        option ipaddr '70.70.71.1'
+        option netmask '255.255.255.0'
+        option dns '70.70.70.1'

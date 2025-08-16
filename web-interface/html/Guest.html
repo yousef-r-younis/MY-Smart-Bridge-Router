@@ -1,0 +1,342 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Network</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css2/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+
+    .title {
+        padding: 10px 0 0 0;
+    }
+
+    .back-button {
+        background: var(--dark-button-background);
+    }
+
+    .guest-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .guest-content {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-label {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        gap: 10px;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: bold;
+    }
+
+    .bandwidth-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .settings-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: bold;
+        border-bottom: 1px solid gray;
+        padding-bottom: 10px;
+    }
+
+    .settings-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .edit-button {
+        background: transparent;
+        border: none;
+        color: white;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .edit-button:hover {
+        opacity: 1;
+    }
+
+    .devices-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border-radius: 5px;
+        border: 1px solid var(--dark-border);
+    }
+
+    .device-item {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+        background-color: var(--dark-container-background);
+        border-radius: 5px;
+        text-align: center;
+        border-bottom: 1px solid var(--dark-border);
+    }
+
+    .device-item:last-child {
+        border-bottom: none;
+    }
+
+    .device-name {
+        font-weight: bold;
+        text-align: start;
+    }
+
+    .device-status[data-status="connected"] {
+        color: #22c55e;
+        font-weight: bold;
+        text-align: end;
+    }
+
+    .device-status[data-status="offline"] {
+        color: #ef4444;
+        font-weight: bold;
+        text-align: end;
+    }
+
+    .device-block-button-section {
+        grid-column: span 2;
+        display: flex;
+        align-content: center;
+        justify-content: center;
+    }
+
+    .device-block-button {
+        font-weight: bold;
+        padding: 5px 30px;
+        border: none;
+        border-radius: 10px;
+    }
+
+    .popup-overlay {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .popup-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        width: 100%;
+        background-color: var(--dark-container-background);
+        border-radius: 5px;
+        text-align: center;
+        border: 2px solid var(--dark-border);
+        border-bottom: 1px solid var(--dark-border);
+    }
+
+    .popup-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        width: 60%;
+        padding: 20px;
+        border-radius: 5px;
+        border: 2px solid var(--dark-border);
+        text-align: center;
+    }
+
+    .popup-label {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    }
+
+    .qr-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        text-align: center;
+    }
+
+    #qrcode {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .qr-info {
+        display : flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <header class="title-container">
+            <button class="back-button" onclick="window.location.href = 'Dashboard.html';" class="b"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="title">Guest Network</h1>
+            <button class="moon"></button>
+        </header>
+
+        <div class="card">
+            <header class="guest-header">
+                    <h2>Guest Network</h2>
+                    <label class="switch">
+                        <input type="checkbox" id="guest-toggle" onclick="toggleGuest()">
+                        <span class="slider"></span>
+                    </label>
+            </header>
+            <div class="divider"></div>
+            <div class="guest-content">
+                <div class="info-label"><span>SSID</span><span id="guest-ssid">--</span></div>
+                <div class="info-label">
+                    <span>Bandwidth</span>
+                    <div class="bandwidth-controls">
+                        <span>&uparrow;</span>
+                        <span id="guest-upload">--</span>
+                        <span>&downarrow;</span>
+                        <span id="guest-download">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+
+            <div class="settings-row">
+                <div class="settings-content">
+                    <i class="fa fa-wifi"></i>
+                    <div class="info-settings">
+                        <span class="settings-label">SSID</span>
+                        <span id="settingsSSIDValue">--</span>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('ssid')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-content">
+                    <i class="fa fa-lock"></i>
+                    <div class="info-settings">
+                        <span class="settings-label">Password</span>
+                        <span id="settingsPasswordValue">--</span>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('password')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-content">
+                    <i class="fa fa-clock"></i>
+                    <div class="info-settings">
+                        <span class="settings-label">Schedule</span>
+                        <span id="settingsScheduleValue">--</span>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('schedule')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-content">
+                    <i class="fa fa-gauge-high"></i>
+                    <div class="info-settings">
+                        <span class="settings-label">Bandwidth</span>
+                        <span id="settingsBandwidthValue">--</span>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('bandwidth')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-content">
+                    <i class="fa fa-qrcode"></i>
+                    <div class="info-settings">
+                        <span class="settings-label">QR Code</span>
+                        <span>Scan to connect</span>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="showQRCode()">
+                    <i class="fa fa-eye"></i>
+                </button>
+            </div>
+
+        </div>
+
+        <div class="popup-overlay">
+            <div class="popup-content">
+                <h3 id="popupTitle"></h3>
+                <div class="popup-form">
+                    <div class="popup-label"></div>
+                    <div class="popup-act"></div>
+                </div>
+                <div class="popup-actions"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>
+                <i class="fa fa-laptop"></i>
+                Connected Devices
+            </h2>
+            <div class="devices-list"></div>
+        </div>
+
+    </div>
+
+    <script type = "module" src="js/Guest.js"></script>
+</body>
+</html>

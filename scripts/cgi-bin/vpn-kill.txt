@@ -1,0 +1,7 @@
+#!/bin/ash
+echo "Content-type: text/plain"
+echo "Content-Length: 7"
+echo ""
+killall openvpn
+echo "DONE"
+exit 0

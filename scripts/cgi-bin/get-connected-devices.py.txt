@@ -1,0 +1,324 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import re
+import os
+import time
+import sys
+
+
+def run_command(cmd):
+    """Run shell command and return output with better error handling"""
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
+        return result.stdout.strip() if result.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def is_device_reachable(ip, mac):
+    """Check if device is actually reachable/connected"""
+    # Check ARP table for active entries (not FAILED or INCOMPLETE)
+    arp_output = run_command(f"ip neigh show {ip}")
+    if arp_output:
+        # Skip if marked as FAILED, INCOMPLETE, or STALE
+        if any(status in arp_output.upper() for status in ['FAILED', 'INCOMPLETE']):
+            return False
+        # If it's REACHABLE or has a valid MAC, it's connected
+        if 'REACHABLE' in arp_output.upper() or mac.lower() in arp_output.lower():
+            return True
+
+    # Alternative: try to ping the device (quick check)
+    ping_result = run_command(f"ping -c 1 -W 1 {ip} >/dev/null 2>&1 && echo 'reachable'")
+    return ping_result == 'reachable'
+
+
+def get_dhcp_devices():
+    """Read DHCP lease information from multiple possible locations with validation"""
+    devices = {}
+
+    # Try multiple possible DHCP lease file locations
+    lease_files = [
+        "/tmp/dhcp.leases",
+        "/var/dhcp.leases",
+        "/var/lib/dhcp/dhcpd.leases"
+    ]
+
+    for leases_file in lease_files:
+        if not os.path.exists(leases_file):
+            continue
+
+        try:
+            with open(leases_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+
+                    fields = line.split()
+                    if len(fields) >= 4:
+                        timestamp = int(fields[0])
+                        mac = fields[1].upper()
+                        ip = fields[2]
+                        hostname = fields[3] if fields[3] != '*' else None
+
+                        # Check if lease is not expired (timestamp is lease expiry time)
+                        current_time = int(time.time())
+                        if timestamp < current_time:
+                            continue  # Skip expired leases
+
+                        # Validate that device is actually reachable
+                        if not is_device_reachable(ip, mac):
+                            continue  # Skip unreachable devices
+
+                        devices[mac] = {
+                            "mac": mac,
+                            "ip": ip,
+                            "hostname": hostname,
+                            "timestamp": str(timestamp),
+                            "connection_type": "unknown",
+                            "wireless_details": None,
+                            "ethernet_details": None
+                        }
+
+        except Exception:
+            continue
+
+    return devices
+
+
+def find_ap_interface():
+    """Find available AP interface"""
+    # Try common interface names first
+    for iface in ["phy0-ap0", "phy1-ap0"]:
+        if run_command(f"iw dev {iface} info >/dev/null 2>&1 && echo 'found'"):
+            return iface
+
+    # Look for interfaces with "ap" in name
+    ifaces_output = run_command("iw dev | grep Interface | awk '{print $2}'")
+    if ifaces_output:
+        ifaces = ifaces_output.split('\n')
+        for iface in ifaces:
+            if iface and "ap" in iface.lower():
+                return iface
+
+            # Check if interface is in AP mode
+            mode = run_command(f"iw dev {iface} info 2>/dev/null | grep 'type' | awk '{{print $2}}'")
+            if mode == "AP":
+                return iface
+
+    return "phy0-ap0"  # Fallback
+
+
+def get_wireless_stations():
+    """Get list of wirelessly connected devices"""
+    wireless_macs = set()
+    ap_iface = find_ap_interface()
+
+    stations_output = run_command(f"iw dev {ap_iface} station dump 2>/dev/null | grep 'Station' | awk '{{print $2}}'")
+    if stations_output:
+        stations = [s.strip().upper() for s in stations_output.split('\n') if s.strip()]
+        wireless_macs.update(stations)
+
+    # Try alternative interfaces if no stations found
+    if not wireless_macs:
+        alt_ifaces = ["wlan0", "wlan1"]
+        ifaces_output = run_command("iw dev | grep Interface | awk '{print $2}'")
+        if ifaces_output:
+            alt_ifaces.extend(ifaces_output.split('\n'))
+
+        for alt_iface in alt_ifaces:
+            if alt_iface:
+                temp_stations = run_command(f"iw dev {alt_iface} station dump 2>/dev/null | grep 'Station' | awk '{{print $2}}'")
+                if temp_stations:
+                    stations = [s.strip().upper() for s in temp_stations.split('\n') if s.strip()]
+                    wireless_macs.update(stations)
+                    ap_iface = alt_iface
+                    break
+
+    return wireless_macs, ap_iface
+
+
+def get_wireless_details(mac, ap_iface):
+    """Get detailed wireless information for a specific MAC"""
+    station_info = run_command(f"iw dev {ap_iface} station get {mac} 2>/dev/null")
+    if not station_info:
+        return None
+
+    details = {}
+
+    try:
+        # Extract signal
+        signal_match = re.search(r'signal:\s*(-?\d+)', station_info)
+        details['signal'] = int(signal_match.group(1)) if signal_match else None
+
+        # Calculate quality
+        if details['signal']:
+            signal_abs = abs(details['signal'])
+            if signal_abs <= 30:
+                details['quality'] = 100
+            elif signal_abs >= 100:
+                details['quality'] = 0
+            else:
+                details['quality'] = int((100 - signal_abs) * 100 / 70)
+        else:
+            details['quality'] = None
+
+        # Extract packet counts
+        tx_packets_match = re.search(r'tx packets:\s*(\d+)', station_info)
+        details['tx_packets'] = int(tx_packets_match.group(1)) if tx_packets_match else None
+
+        rx_packets_match = re.search(r'rx packets:\s*(\d+)', station_info)
+        details['rx_packets'] = int(rx_packets_match.group(1)) if rx_packets_match else None
+
+        # Extract byte counts
+        tx_bytes_match = re.search(r'tx bytes:\s*(\d+)', station_info)
+        details['tx_bytes'] = int(tx_bytes_match.group(1)) if tx_bytes_match else None
+
+        rx_bytes_match = re.search(r'rx bytes:\s*(\d+)', station_info)
+        details['rx_bytes'] = int(rx_bytes_match.group(1)) if rx_bytes_match else None
+
+        # Extract bitrates
+        tx_bitrate_match = re.search(r'tx bitrate:\s*(.+?)(?:\n|$)', station_info)
+        details['tx_bitrate'] = tx_bitrate_match.group(1).strip() if tx_bitrate_match else ""
+
+        rx_bitrate_match = re.search(r'rx bitrate:\s*(.+?)(?:\n|$)', station_info)
+        details['rx_bitrate'] = rx_bitrate_match.group(1).strip() if rx_bitrate_match else ""
+
+        # Extract connected time
+        connected_time_match = re.search(r'connected time:\s*(.+?)(?:\n|$)', station_info)
+        details['connected_time'] = connected_time_match.group(1).strip() if connected_time_match else ""
+
+    except Exception:
+        pass
+
+    return details if details else None
+
+
+def get_ethernet_details(mac, ip):
+    """Get network interface statistics for ethernet devices"""
+    details = {}
+
+    try:
+        # Try to find which interface this device is using
+        arp_info = run_command(f"grep -i '{mac}' /proc/net/arp")
+        interface = 'br-lan'  # Default
+
+        if arp_info:
+            arp_fields = arp_info.split()
+            if len(arp_fields) >= 6:
+                interface = arp_fields[5]
+
+        details['interface'] = interface
+
+        # Get interface statistics from /proc/net/dev
+        if interface:
+            stats = run_command(f"grep '{interface}:' /proc/net/dev")
+            if stats:
+                fields = stats.split()
+                if len(fields) >= 17:
+                    details.update({
+                        'rx_bytes': int(fields[1]) if fields[1].isdigit() else None,
+                        'rx_packets': int(fields[2]) if fields[2].isdigit() else None,
+                        'rx_errors': int(fields[3]) if fields[3].isdigit() else None,
+                        'tx_bytes': int(fields[9]) if fields[9].isdigit() else None,
+                        'tx_packets': int(fields[10]) if fields[10].isdigit() else None,
+                        'tx_errors': int(fields[11]) if fields[11].isdigit() else None,
+                    })
+
+        # Try to get link speed and duplex (for physical ethernet interfaces)
+        if interface and interface != 'br-lan':
+            ethtool_info = run_command(f"ethtool {interface} 2>/dev/null")
+            if ethtool_info:
+                # Extract speed
+                speed_match = re.search(r'Speed:\s*(\d+)Mb/s', ethtool_info)
+                if speed_match:
+                    details['link_speed'] = f"{speed_match.group(1)}Mbps"
+
+                # Extract duplex
+                duplex_match = re.search(r'Duplex:\s*(\w+)', ethtool_info)
+                if duplex_match:
+                    details['duplex'] = duplex_match.group(1)
+
+                # Extract link status
+                link_match = re.search(r'Link detected:\s*(\w+)', ethtool_info)
+                if link_match:
+                    details['link_status'] = link_match.group(1)
+
+    except Exception:
+        pass
+
+    return details if details else None
+
+
+def get_all_devices():
+    """Get all connected devices (wireless and ethernet) - only active ones"""
+    try:
+        # Get DHCP devices (filtered for active/reachable only)
+        devices = get_dhcp_devices()
+
+        # Get wireless station info
+        wireless_macs, ap_iface = get_wireless_stations()
+
+        # Classify devices and add connection details
+        for mac, device in devices.items():
+            if mac in wireless_macs:
+                device["connection_type"] = "wireless"
+                device["wireless_details"] = get_wireless_details(mac, ap_iface)
+                device["interface"] = ap_iface
+            else:
+                device["connection_type"] = "ethernet"
+                device["ethernet_details"] = get_ethernet_details(mac, device["ip"])
+                # Set interface from ethernet details if available
+                if device["ethernet_details"] and device["ethernet_details"].get("interface"):
+                    device["interface"] = device["ethernet_details"]["interface"]
+                else:
+                    device["interface"] = "br-lan"
+
+        return list(devices.values())
+
+    except Exception:
+        return []
+
+
+def main():
+    """Main CGI function with comprehensive error handling"""
+    # Print HTTP headers first (only once)
+    print("Content-type: application/json")
+    print("Cache-Control: no-cache")
+    print()  # Empty line required after headers
+
+    try:
+        # Get devices
+        devices = get_all_devices()
+
+        # Build response
+        response = {
+            "timestamp": int(time.time()),
+            "total_devices": len(devices),
+            "wireless_count": len([d for d in devices if d["connection_type"] == "wireless"]),
+            "ethernet_count": len([d for d in devices if d["connection_type"] == "ethernet"]),
+            "devices": devices
+        }
+
+        # Output JSON (only once)
+        print(json.dumps(response, indent=2))
+
+    except Exception as e:
+        # Fallback error response - always return valid JSON
+        error_response = {
+            "error": str(e),
+            "timestamp": int(time.time()),
+            "total_devices": 0,
+            "wireless_count": 0,
+            "ethernet_count": 0,
+            "devices": []
+        }
+        print(json.dumps(error_response, indent=2))
+
+    # Ensure we exit cleanly
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

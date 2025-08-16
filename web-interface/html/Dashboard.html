@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css2/all.min.css">
+
+    <style>
+
+       .title-container {
+            justify-content: space-around;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .button-pages {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(200px, 1fr));
+            padding: 20px;
+            gap: 20px;
+            background-color: var(--dark-container-background);
+            border: 2px solid var(--dark-border);
+            border-radius: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover , .button-pages:hover {
+            box-shadow: 0 8px 16px var(--dark-shadow);
+            transform: translateY(-5px);
+     }
+
+        .b {
+            font-weight: 700;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px;
+            background-color: var(--dark-stats-background);
+            font-family: var(--font2);
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+
+        .stats p , .stats span {
+            padding: 10px;
+        }
+
+        .card h2 {
+            font-family: var(--font1);
+            margin: 0px 0 10px 0;
+            align-self: center;
+            text-shadow: 0 0 10px var(--dark-shadow);
+            color: var(--dark-mini-title);
+        }
+
+        .auth-info {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--dark-stats-background);
+            font-family: var(--font2);
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+
+         .traffic-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 20px;
+            border: 2px solid var(--dark-border);
+            border-radius: 10px;
+            background-color: var(--dark-container-background);
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .traffic-info{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: stretch;
+            background-color: var(--dark-container-background);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .traffic-title {
+            align-self: center;
+            font-size: 17px;
+
+        }
+
+        .traffic-download, .traffic-upload {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex: 1;
+            gap: 15px;
+            background-color: var(--dark-stats-background);
+            border-radius: 10px;
+            padding: 20px 5px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+
+        .traffic-info p {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 1px;
+            padding: 10px 5px;
+            background-color: var(--dark-container-background);
+            font-family: var(--font2);
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            border: 1px solid var(--dark-border);
+        }
+
+        .device-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .device-header h2 {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font1);
+            color: var(--dark-text);
+            text-shadow: 0 0 10px var(--dark-shadow);
+        }
+
+        .device-count-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 7px;
+            padding: 10px;
+            margin: 0 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--dark-shadow);
+        }
+
+        .device-count-container span {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font2);
+            font-size: 17px;
+            font-weight: bold;
+            color: var(--dark-text);
+        }
+
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 10px;
+            background-color: var(--dark-container-background);
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--dark-shadow);
+            border-radius: 8px;
+            border: 1px solid var(--dark-border);
+        }
+
+        .device-item {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            padding: 10px;
+            background-color: var(--dark-container-background);
+            font-size: 15px;
+            color: var(--dark-text);
+            border-bottom: 2px solid var(--dark-border);
+        }
+
+        .device-item:last-child {
+            border-bottom: none;
+        }
+
+        .device-name , .blocked-device-name {
+            font-family: var(--font1);
+            font-size: 17px;
+            grid-column: span 2;
+            font-weight: bold;
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
+            grid-column: span 1;
+            font-family: monospace;
+            font-weight: bold;
+            padding: 5px;
+        }
+
+        .device-mac {
+            grid-area: 3 / 1 / 3 / 2;
+        }
+
+        .device-interface {
+            grid-area: 4 / 1 / 4 / 2;
+        }
+
+        .device-block-button-section {
+            grid-column: span 3;
+            display: flex;
+            align-content: center;
+            justify-content: center;
+        }
+
+        .device-block-button {
+            font-weight: bold;
+            padding: 5px 30px;
+            border: none;
+            border-radius: 10px;
+            transition: padding 0.3s, background 0.3s, color 0.3s;
+        }
+
+        .blocked-device-item {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            padding: 10px;
+            background-color: var(--dark-container-background);
+            border-radius: 10px;
+            font-size: 16px;
+            color: var(--dark-text);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+            text-align: center;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .blocked-device-item:last-child {
+            border-bottom: none;
+        }
+
+        .device-unblock-button-section {
+            grid-column: span 2;
+            display: flex;
+            align-content: center;
+            justify-content: center;
+        }
+
+        .device-unblock-button {
+            background-color: rgb(0, 150, 0);
+            font-weight: bold;
+            padding: 5px 30px;
+            border: none;
+            border-radius: 10px;
+            transition: transform 0.3s, background-color 0.3s, color 0.3s;
+        }
+
+        .device-unblock-button:hover {
+            background-color: green;
+        }
+
+        .device-unblock-button:active {
+            background-color: rgb(94, 220, 94);
+            color: rgb(0, 0, 0);
+
+        }
+
+        .confirmation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            position: fixed;
+            top: 40%;
+            align-self: center;
+            background-color: var(--dark-container-background);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--dark-border);
+            box-shadow: 0 0 10px var(--dark-shadow);
+            z-index: 1001;
+        }
+
+        .confirmation p {
+            font-family: var(--font2);
+            font-size: 18px;
+            color: var(--dark-text);
+            grid-column: span 2;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            gap: 20px;
+            width: min(1200px, 95%);
+            background-color: transparent;
+        }
+
+
+        @media screen and (max-width: 600px) {
+            .traffic-stats, .Auth-container, .stats-container {
+                padding: 15px;
+            }
+
+            .title-container {
+                padding: 0px;
+            }
+
+            .title {
+                font-size: 25px;
+            }
+
+            .button-pages {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .stats p{
+                padding: 10px;
+            }
+
+            .stats span {
+                margin: 0px 5px;
+            }
+
+            .traffic-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .traffic-download, .traffic-upload {
+
+                padding: 10px;
+            }
+            .traffic-info p {
+                font-size: 17px;
+                margin: 0;
+            }
+            .device-container {
+                padding: 10px;
+            }
+            .device-item {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .background-container {
+                width: 100%;
+                padding: 5px 12px 20px 12px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+<div class = "container">
+
+    <header class = "title-container">
+        <div><button class="moon"></button></div>
+        <div><h1 class = "title">Dashboard</h1></div>
+        <div><button class="sun"></button></div>
+    </header>
+
+
+    <div class="button-pages">
+       <div> <button onclick="window.location.href = 'Settings.html';" class="b">Settings <i class="fa-solid fa-gears"></i></button></div>
+       <div> <button onclick="window.location.href = 'VPN.html';" class="b">VPN <i class="fa-solid fa-user-secret"></i></button></div>
+       <div> <button onclick="window.location.href = 'AdGuard.html';" class="b">Parental Control <i class="fa-solid fa-child"></i></button></div>
+       <div> <button onclick="window.location.href = 'Guest.html';" class="b">Guest Network <i class="fa-solid fa-network-wired"></i></button></div>
+    </div>
+
+
+    <div class="card">
+        <h2>Hardware stats</h2>
+        <div class="stats"><p><i class="fa-solid fa-temperature-half"></i> CPU Temp:</p><span id = "cpuTemp"> -- </span></div>
+        <div class="stats"><p><i class="fa fa-microchip"></i> CPU Load:</p><span id = "cpuLoad"> -- </span></div>
+        <div class="stats"><p><i class="fa-solid fa-server"></i> System Load:</p><span id = "systemLoad"> -- </span></div>
+        <div class="stats"><p><i class="fa-solid fa-sd-card"></i> Memory Usage:</p><span id = "memoryUsage"> -- </span></div>
+        <div class="stats"><p><i class="fa-solid fa-clock"></i> Uptime:</p><span id = "uptime"> -- </span></div>
+    </div>
+
+
+    <div class="card">
+        <h2>Session Info <i class="fa-solid fa-fingerprint"></i></h2>
+        <div class="auth-info"><p>Username:</p><span id = "username"> -- </span></div>
+        <div class="auth-info"><p>isAuthenticated:</p><span id = "authenticated"> -- </span></div>
+        <div class="auth-info"><p>Time Left:</p><span id = "timeLeft"> -- </span></div>
+        <div class="auth-info"><p>maxAttempts:</p><span id = "maxAttempts"> -- </span></div>
+        <div class="auth-info"><p><i class="fa-solid fa-circle-info"></i> Info:</p><span id = "sInfo">Session resets with mouse or keyboard events</span></div>
+    </div>
+
+
+    <div class="card">
+        <h2>Traffic Stats</h2>
+        <div class="traffic-info">
+            <div class = "traffic-download">
+                <span class = "traffic-title">Download <i class="fa fa-download"></i></span>
+                <p>Total: <span id = "downloadTotal"> -- </span></p>
+                <p>Packets: <span id = "downloadPackets"> -- </span></p>
+                <p>Rate: <span id = "downloadRate"> -- </span></p>
+            </div>
+            <div class = "traffic-upload">
+                <span class = "traffic-title">Upload <i class="fa fa-upload"></i></span>
+                <p>Total: <span id = "uploadTotal"> -- </span></p>
+                <p>Packets: <span id = "uploadPackets"> -- </span></p>
+                <p>Rate: <span id = "uploadRate"> -- </span></p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="device-header">
+            <h2><i class="fa fa-desktop"></i>Connected Devices</h2>
+            <button class="device-count-container" onclick="toggleDeviceList('valid')">
+                <span class="device-count"><i class="fa fa-user"></i><p id = 'count'>0</p></span>
+                <span aria-label="Expand device list">▼</span>
+            </button>
+        </div>
+        <div class="device-list deviceList" style="display: none"></div>
+    </div>
+
+
+    <div class="card">
+        <div class="device-header">
+            <h2><i class="fa fa-ban"></i>Blocked Devices</h2>
+            <button class="device-count-container" onclick="toggleDeviceList('blocked')">
+                <span class="device-count" id = 'countb'>0</span>
+                <span aria-label="Expand blocked device list">▼</span>
+            </button>
+        </div>
+        <div class="device-list blockedDeviceList" style="display: none"></div>
+    </div>
+
+    <div class="button-pages" style="grid-template-columns: repeat(3, 1fr);">
+        <button class="b" onclick="Confirmation('reboot')">Reboot <i class="fa fa-refresh"></i></button>
+        <button class="b" onclick="Confirmation('shutdown')">Shutdown <i class="fa fa-power-off"></i></button>
+        <button class="b" onclick="HandleLogout()">Logout <i class="fa fa-sign-out"></i></button>
+    </div>
+
+    <div class="confirmation" style="display: none;">
+    <p class="confirm-text">Are you sure?</p>
+    <button class="confirm-button">Yes</button>
+    <button class="cancel-button">No</button>
+</div>
+</div>
+
+<script type="module" src="js/Dashboard.js"></script>
+</body>
+</html>

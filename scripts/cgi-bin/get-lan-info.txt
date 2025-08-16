@@ -1,0 +1,27 @@
+#!/bin/sh
+echo "Content-type: application/json"
+echo ""
+
+# Get LAN IP address
+LAN_IP=$(uci get network.lan.ipaddr 2>/dev/null)
+
+# Get LAN netmask
+LAN_MASK=$(uci get network.lan.netmask 2>/dev/null)
+
+# Get DNS server
+LAN_DNS=$(uci get network.lan.dns 2>/dev/null)
+
+# Get DHCP configuration
+DHCP_START=$(uci get dhcp.lan.start 2>/dev/null)
+DHCP_LIMIT=$(uci get dhcp.lan.limit 2>/dev/null)
+DHCP_LEASETIME=$(uci get dhcp.lan.leasetime 2>/dev/null)
+
+# Output as JSON
+echo "{"
+echo "  \"lan_ip\": \"$LAN_IP\","
+echo "  \"netmask\": \"$LAN_MASK\","
+echo "  \"dns\": \"$LAN_DNS\","
+echo "  \"dhcp_start\": \"$DHCP_START\","
+echo "  \"dhcp_limit\": \"$DHCP_LIMIT\","
+echo "  \"dhcp_leasetime\": \"$DHCP_LEASETIME\""
+echo "}"

@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""
+OpenWrt Blocked Devices Script (Excluding Parental Controls)
+Returns list of devices blocked in the firewall rules
+Python version of the shell script
+"""
+
+import json
+import subprocess
+import re
+import time
+from typing import Dict, List, Optional, Tuple
+
+def run_command(cmd: str) -> str:
+    """Execute shell command and return output"""
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+def get_arp_table() -> str:
+    """Get ARP table contents"""
+    try:
+        with open('/proc/net/arp', 'r') as f:
+            return f.read()
+    except Exception:
+        return ""
+
+def get_dhcp_leases() -> str:
+    """Get DHCP leases contents"""
+    try:
+        with open('/var/dhcp.leases', 'r') as f:
+            return f.read()
+    except Exception:
+        return ""
+
+def get_hostname_from_mac(mac: str, dhcp_leases: str) -> Optional[str]:
+    """Get hostname from MAC address using DHCP leases"""
+    for line in dhcp_leases.split('\n'):
+        if mac.lower() in line.lower():
+            parts = line.split()
+            if len(parts) >= 4:
+                hostname = parts[3]
+                if hostname != "*" and hostname:
+                    return hostname
+    return None
+
+def get_ip_from_mac(mac: str, arp_table: str, dhcp_leases: str) -> Optional[str]:
+    """Get IP address from MAC address using ARP table and DHCP leases"""
+    # Try ARP table first
+    for line in arp_table.split('\n'):
+        if mac.lower() in line.lower():
+            parts = line.split()
+            if parts:
+                return parts[0]
+
+    # Try DHCP leases
+    for line in dhcp_leases.split('\n'):
+        if mac.lower() in line.lower():
+            parts = line.split()
+            if len(parts) >= 3:
+                return parts[2]
+
+    return None
+
+def get_uci_value(path: str) -> str:
+    """Get UCI configuration value"""
+    cmd = f"uci -q get {path}"
+    return run_command(cmd)
+
+def get_firewall_rules() -> List[int]:
+    """Get list of firewall rule numbers"""
+    cmd = "uci show firewall | grep '=rule$'"
+    output = run_command(cmd)
+
+    rule_numbers = []
+    for line in output.split('\n'):
+        if line:
+            # Extract rule number from firewall.@rule[X]=rule
+            match = re.search(r'firewall\.@rule\[(\d+)\]', line)
+            if match:
+                rule_numbers.append(int(match.group(1)))
+
+    return rule_numbers
+
+def is_parental_control_rule(rule_details: Dict[str, str]) -> bool:
+    """Check if a rule is a parental control rule"""
+    name = rule_details.get('name', '')
+    start_time = rule_details.get('start_time')
+    src_mac = rule_details.get('src_mac')
+    dest_ip = rule_details.get('dest_ip')
+    dest_port = rule_details.get('dest_port')
+
+    # Check parental control criteria
+    if name and "parental" in name.lower():
+        return True
+    if start_time:
+        return True
+    # More specific check: MAC + specific dest_ip + port restrictions = parental control
+    if src_mac and dest_ip and dest_port:
+        return True
+
+    return False
+
+def get_rule_details(rule_num: int) -> Dict[str, str]:
+    """Get all details for a firewall rule"""
+    fields = ['name', 'src', 'dest', 'proto', 'src_mac', 'dest_ip', 'target',
+              'start_time', 'stop_time', 'enabled', 'dest_port', 'src_port']
+    details = {}
+
+    for field in fields:
+        value = get_uci_value(f"firewall.@rule[{rule_num}].{field}")
+        details[field] = value if value else None
+
+    return details
+
+def get_blocked_devices() -> List[Dict]:
+    """Get list of blocked devices excluding parental controls"""
+    blocked_devices = []
+
+    # Get supporting data
+    arp_table = get_arp_table()
+    dhcp_leases = get_dhcp_leases()
+
+    # Get all firewall rules
+    rule_numbers = get_firewall_rules()
+
+    for rule_num in rule_numbers:
+        # Get rule details
+        rule_details = get_rule_details(rule_num)
+
+        src_mac = rule_details.get('src_mac')
+        target = rule_details.get('target')
+        enabled = rule_details.get('enabled')
+
+        # Check if this is a blocking rule (has src_mac and REJECT/DROP target)
+        if not src_mac or target not in ['REJECT', 'DROP']:
+            continue
+
+        # Skip disabled rules
+        if enabled == '0':
+            continue
+
+        # Skip parental control rules
+        if is_parental_control_rule(rule_details):
+            continue
+
+        # Get IP address and hostname
+        ip = get_ip_from_mac(src_mac, arp_table, dhcp_leases)
+        hostname = get_hostname_from_mac(src_mac, dhcp_leases)
+
+        # Build device info
+        device_info = {
+            'mac': src_mac,
+            'ip': ip,
+            'hostname': hostname,
+            'name': rule_details.get('name'),
+            'block_type': 'MAC address',
+            'src': rule_details.get('src'),
+            'dest': rule_details.get('dest'),
+            'proto': rule_details.get('proto'),
+            'target': target,
+            'enabled': rule_details.get('enabled'),
+            'rule_number': str(rule_num)
+        }
+
+        blocked_devices.append(device_info)
+
+    return blocked_devices
+
+def main():
+    """Main function to generate JSON response"""
+    # Set CGI headers
+    print("Content-type: application/json")
+    print("Cache-Control: no-cache")
+    print()  # Empty line required after headers
+
+    try:
+        # Get blocked devices
+        blocked_devices = get_blocked_devices()
+
+        # Build response
+        response = {
+            'timestamp': int(time.time()),
+            'blocked_devices': blocked_devices
+        }
+
+        # Output JSON
+        print(json.dumps(response, indent=2))
+
+    except Exception as e:
+        # Error response
+        error_response = {
+            'timestamp': int(time.time()),
+            'error': str(e),
+            'blocked_devices': []
+        }
+        print(json.dumps(error_response, indent=2))
+
+if __name__ == '__main__':
+    main()
