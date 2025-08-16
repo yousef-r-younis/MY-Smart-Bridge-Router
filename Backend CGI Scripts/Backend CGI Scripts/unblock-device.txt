@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# Send HTTP headers
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo ""
+
+# Read query string
+query_string="$QUERY_STRING"
+mac_address=$(echo "$query_string" | sed -n 's/^.*mac=\([^&]*\).*$/\1/p')
+
+# URL decode the MAC address
+mac_address=$(echo "$mac_address" | sed 's/%3A/:/g')
+
+# Validate MAC address format
+if ! echo "$mac_address" | grep -Eq '^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$'; then
+    echo '{"status": "error", "message": "Invalid MAC address format"}'
+    logger "Unblock device failed: Invalid MAC address format ($mac_address)"
+    exit 1
+fi
+
+# Log the unblock attempt
+logger "Attempting to unblock device: $mac_address"
+
+# Find all firewall rules containing this MAC address
+rule_indices=$(uci show firewall | grep -i "src_mac='$mac_address'" | sed -n 's/firewall\.\@rule\[\([0-9]\+\)\].*/\1/p')
+
+if [ -n "$rule_indices" ]; then
+    # Delete rules in reverse order to maintain correct indices
+    for index in $(echo "$rule_indices" | sort -nr); do
+        uci delete firewall.@rule[$index]
+    done
+
+    # Commit changes and reload firewall
+    uci commit firewall
+    /etc/init.d/firewall reload
+
+    echo '{"status": "success", "message": "Device unblocked successfully"}'
+    logger "Device unblocked successfully: $mac_address"
+else
+    echo '{"status": "error", "message": "No blocking rule found for this device"}'
+    logger "Failed to unblock device: No rule found for $mac_address"
+fi
+
+exit 0

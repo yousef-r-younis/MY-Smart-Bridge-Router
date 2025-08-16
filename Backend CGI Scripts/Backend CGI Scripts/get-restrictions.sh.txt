@@ -1,0 +1,40 @@
+#!/bin/sh
+# filepath: d:\xampp\htdocs\MY Smart Router Web\cgi-bin\get-restrictions.sh
+
+# Print HTTP headers
+echo "Content-type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo ""
+
+# Get all time restriction rules from firewall
+echo "{"
+echo "  \"restrictions\": ["
+first=true
+uci show firewall | grep "Time_Restrict_" | while IFS='=' read -r key value; do
+    section=$(echo "$key" | cut -d. -f2)
+    if [ "$first" = true ]; then
+        first=false
+    else
+        echo ","
+    fi
+    mac=$(uci get firewall.$section.src_mac)
+# Function to validate MAC address - update to handle both formats
+validate_mac() {
+    # Handle both lowercase and uppercase, with or without colons
+    echo "$1" | grep -Eq '^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$'
+    return $?
+}
+    start_time=$(uci get firewall.$section.start_time)
+    end_time=$(uci get firewall.$section.stop_time)
+    # Try to get device name from DHCP leases
+    device_name=$(cat /tmp/dhcp.leases | grep "$mac" | cut -d' ' -f4)
+    echo "    {"
+    echo "      \"mac\": \"$mac\","
+    [ -n "$device_name" ] && echo "      \"device_name\": \"$device_name\","
+    echo "      \"start_time\": \"$start_time\","
+    echo "      \"end_time\": \"$end_time\""
+    echo -n "    }"
+done
+echo
+echo "  ]"
+echo "}"

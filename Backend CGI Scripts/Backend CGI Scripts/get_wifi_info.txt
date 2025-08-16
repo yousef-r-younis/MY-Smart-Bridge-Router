@@ -1,0 +1,18 @@
+#!/bin/sh
+
+echo "Content-Type: application/json"
+echo ""
+
+# Get WiFi settings
+SSID=$(uci get wireless.default_radio1.ssid 2>/dev/null)
+PASSWORD=$(uci get wireless.default_radio1.key 2>/dev/null)
+CHANNEL=$(uci get wireless.radio1.channel 2>/dev/null)
+
+# Output JSON
+cat <<EOF
+{
+    "ssid": "$SSID",
+    "password": "$PASSWORD",
+    "channel": "$CHANNEL"
+}
+EOF

@@ -1,0 +1,48 @@
+#!/bin/sh
+
+LOG_FILE="/tmp/phished.txt"
+TEMP_FILE="/tmp/phished.txt.tmp"
+
+echo "Content-type: application/json"
+echo ""
+
+if [ "$REQUEST_METHOD" != "POST" ]; then
+  echo '{"success": false, "message": "Invalid request method. Use POST."}'
+  exit 0
+fi
+
+read -n "$CONTENT_LENGTH" POST_DATA
+
+encoded_id=$(echo "$POST_DATA" | sed -n 's/^id=\(.*\)$/\1/p')
+
+if [ -z "$encoded_id" ]; then
+  echo '{"success": false, "message": "ID parameter missing in POST data."}'
+  exit 0
+fi
+
+urldecode() {
+    local data="$1"
+    data="${data//+/ }"
+    printf '%b' "${data//%/\\x}"
+}
+line_to_delete=$(urldecode "$encoded_id")
+
+if [ ! -f "$LOG_FILE" ]; then
+  echo '{"success": false, "message": "Log file not found."}'
+  exit 0
+fi
+
+if grep -vFx -- "$line_to_delete" "$LOG_FILE" > "$TEMP_FILE"; then
+  if mv "$TEMP_FILE" "$LOG_FILE"; then
+    echo '{"success": true}'
+    exit 0
+  else
+    rm -f "$TEMP_FILE"
+    echo '{"success": false, "message": "Failed to update log file."}'
+    exit 0
+  fi
+else
+  rm -f "$TEMP_FILE"
+  echo '{"success": false, "message": "Line not found or grep failed."}'
+  exit 0
+fi

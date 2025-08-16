@@ -1,0 +1,2016 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Network</title>
+    <style>
+        /* Copy the root variables and base styles from dashboard.html */
+        :root {
+            --bg-light: #E8F4F8;
+            --bg-dark: #000000;
+            --accent-light: #0B3D91;
+            --accent-dark: #00E5B9;
+            --gradient-light: linear-gradient(45deg, #2196F3, #E91E63);
+            --gradient-dark: linear-gradient(45deg, #00E5B9, #8A2BE2);
+            --card-light: #FFFFFF;
+            --card-dark: #1A1A1A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .back-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .back-button i {
+            color: white;
+            font-size: 20px;
+        }
+
+        body.light-mode .back-button {
+            background: var(--gradient-light);
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            background: var(--gradient-dark);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            background: var(--gradient-dark);
+            filter: blur(15px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: glowPulse 3s infinite;
+        }
+
+        body.light-mode .title {
+            background: var(--gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        body.light-mode .title::after {
+            background: var(--gradient-light);
+        }
+
+        .theme-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle i {
+            color: white;
+            font-size: 20px;
+            transition: transform 0.5s ease;
+        }
+
+        body.light-mode .theme-toggle {
+            background: var(--gradient-light);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes rotateIcon {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            .theme-toggle, .back-button {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        .network-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: var(--card-dark);
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        body.light-mode .network-card {
+            background: var(--card-light);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .network-card.enabled {
+            background: linear-gradient(45deg, #8A2BE2, #00E5B9);
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+            color: white;
+        }
+
+        body.light-mode .network-card.enabled {
+            background: linear-gradient(45deg, #8A2BE2, #FF1493);
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+            color: white;
+        }
+
+        .network-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .network-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        body.light-mode .network-card .network-title,
+        body.light-mode .network-card .detail-item {
+            color: #333;
+        }
+
+        body.light-mode .network-card.enabled .network-title,
+        body.light-mode .network-card.enabled .detail-item {
+            color: white;
+        }
+
+        .network-toggle {
+            width: 60px;
+            height: 30px;
+            background: #444;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .network-toggle {
+            background: #e0e0e0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .network-toggle::before {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .network-toggle.enabled {
+            background: linear-gradient(45deg, var(--accent-light), #8A2BE2);
+            box-shadow: 0 0 15px var(--accent-light),
+                        inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        body.light-mode .network-toggle.enabled {
+            background: linear-gradient(45deg, var(--accent-light), #8A2BE2);
+            box-shadow: 0 0 15px var(--accent-light),
+                        inset 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .network-toggle.enabled::before {
+            transform: translateX(30px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Add this animation for the glow effect */
+        @keyframes toggleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .network-toggle.enabled {
+            animation: toggleGlow 2s infinite;
+        }
+
+        .network-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .network-details.visible {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            margin: 10px 0;
+            color: white;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        body.light-mode .network-title {
+            color: #333;
+        }
+
+        body.light-mode .detail-item {
+            color: #333;
+        }
+
+        .network-card.enabled .network-title,
+        .network-card.enabled .detail-item,
+        body.light-mode .network-card.enabled .network-title,
+        body.light-mode .network-card.enabled .detail-item {
+            color: white;
+        }
+
+        .settings-card {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            background: var(--card-dark);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .settings-card {
+            background: var(--card-light);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .settings-row {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        body.light-mode .settings-icon {
+            background: var(--gradient-light);
+        }
+
+        .settings-icon i {
+            color: white;
+            font-size: 18px;
+        }
+
+        .settings-content {
+            flex: 1;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .settings-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .edit-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: white;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .edit-button:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .edit-button {
+            color: #333;
+        }
+
+        body.light-mode .edit-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .bandwidth-controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        .bandwidth-field {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-content {
+            background: var(--card-dark);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .popup-content {
+            background: var(--card-light);
+        }
+
+        .popup-form {
+            margin: 20px 0;
+        }
+
+        .popup-form input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        body.light-mode .popup-form input {
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: white;
+            color: #333;
+        }
+
+        .popup-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .popup-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .popup-button.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .popup-button.save {
+            background: var(--gradient-dark);
+            color: white;
+        }
+
+        body.light-mode .popup-button.cancel {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        body.light-mode .popup-button.save {
+            background: var(--gradient-light);
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        body.light-mode .password-toggle {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .password-toggle:hover {
+            color: rgba(255, 255, 255, 1);
+        }
+
+        body.light-mode .password-toggle:hover {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .devices-card {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            background: var(--card-dark);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .devices-card {
+            background: var(--card-light);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .devices-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        body.light-mode .devices-title {
+            color: #333;
+        }
+
+        .devices-title i {
+            background: var(--gradient-dark);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        body.light-mode .devices-title i {
+            background: var(--gradient-light);
+        }
+
+        .device-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .device-item {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        body.light-mode .device-icon {
+            background: var(--gradient-light);
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        body.light-mode .device-name {
+            color: #333;
+        }
+
+        .device-details {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .block-button {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .block-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+        }
+
+        .block-button.unblock {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .device-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .stat-item i {
+            color: var(--accent-dark);
+        }
+
+        body.light-mode .stat-item i {
+            color: var(--accent-light);
+        }
+
+        .device-item.blocked {
+            opacity: 0.7;
+            background: rgba(255, 75, 75, 0.1);
+        }
+
+        .device-item.blocked .device-icon {
+            background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+        }
+
+        /* Add these media queries at the end of your <style> section */
+
+        @media (max-width: 768px) {
+            /* Header adjustments */
+            .header {
+                padding: 15px 0;
+            }
+
+            .title {
+                font-size: 20px;
+            }
+
+            /* Card adjustments */
+            .network-card,
+            .settings-card,
+            .devices-card {
+                padding: 15px;
+                margin-top: 15px;
+            }
+
+            /* Settings row adjustments */
+            .settings-row {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .settings-icon {
+                width: 35px;
+                height: 35px;
+            }
+
+            .bandwidth-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            /* Device item adjustments */
+            .device-header {
+                flex-wrap: wrap;
+            }
+
+            .device-actions {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .block-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .device-stats {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .stat-item {
+                min-width: calc(50% - 10px);
+            }
+
+            .device-details {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            /* Popup adjustments */
+            .popup-content {
+                width: 95%;
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .popup-form input {
+                font-size: 14px;
+            }
+
+            /* Network toggle adjustments */
+            .network-toggle {
+                width: 50px;
+                height: 26px;
+            }
+
+            .network-toggle::before {
+                width: 22px;
+                height: 22px;
+            }
+
+            .network-toggle.enabled::before {
+                transform: translateX(24px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .device-name {
+                font-size: 14px;
+            }
+
+            .device-details {
+                font-size: 11px;
+            }
+
+            .stat-item {
+                font-size: 12px;
+            }
+
+            .settings-label {
+                font-size: 12px;
+            }
+
+            .settings-value {
+                font-size: 14px;
+            }
+        }
+
+        /* Add to your existing styles section */
+        .blocked-devices {
+            margin-top: 20px;
+        }
+
+        .blocked-devices .devices-title i {
+            background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+        }
+
+        body.light-mode .blocked-devices .devices-title i {
+            background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+        }
+
+        body.light-mode .device-item.blocked {
+            background: rgba(255, 75, 75, 0.05);
+        }
+
+        /* Add to your existing styles section */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 8px;
+            background: var(--card-dark);
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--card-shadow);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .notification.success {
+            background: var(--success, #4CAF50);
+        }
+
+        .notification.error {
+            background: var(--error, #FF5252);
+        }
+
+        .notification.fade-out {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Add to your existing styles section */
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #qrcode img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body style="visibility: hidden;">
+
+    <script>
+        (function checkAuth() {
+    try {
+        // Check if user is authenticated
+        const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+        const username = localStorage.getItem('username');
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        // Debug logging
+        console.log('Auth check:', { isAuthenticated, username, lastActivity });
+        
+        // Check for session timeout
+        if (lastActivity && (currentTime - parseInt(lastActivity) > 20 * 60 * 1000)) {
+            console.log('Session expired');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // If not authenticated or wrong username, redirect to login
+        if (!isAuthenticated || username !== 'root') {
+            console.log('Not authenticated, redirecting to login');
+            localStorage.clear();
+            window.location.replace('main.html');
+            return;
+        }
+        
+        // Update last activity time
+        localStorage.setItem('lastActivity', currentTime.toString());
+        
+        // If authenticated, show settings page
+        document.body.style.visibility = 'visible';
+        console.log('Authentication successful');
+        
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.clear();
+        window.location.replace('main.html');
+    }
+})();
+
+// Session timeout handler
+const sessionManager = {
+    timeout: 20 * 60 * 1000, // 20 minutes in milliseconds
+    activityTimer: null,
+    
+    initialize() {
+        // Check if session has expired
+        const lastActivity = localStorage.getItem('lastActivity');
+        const currentTime = Date.now();
+        
+        if (lastActivity && (currentTime - parseInt(lastActivity) > this.timeout)) {
+            this.endSession('Session expired. Please login again.');
+            return;
+        }
+        
+        // Update last activity time
+        this.updateActivityTime();
+        
+        // Add event listeners for user activity
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, () => this.updateActivityTime());
+        });
+        
+        // Start the timer
+        this.startActivityTimer();
+    },
+    
+    updateActivityTime() {
+        localStorage.setItem('lastActivity', Date.now().toString());
+        
+        // Reset the timer
+        if (this.activityTimer) {
+            clearTimeout(this.activityTimer);
+        }
+        this.startActivityTimer();
+    },
+    
+    startActivityTimer() {
+        this.activityTimer = setTimeout(() => {
+            this.endSession('Session timed out due to inactivity.');
+        }, this.timeout);
+    },
+    
+    endSession(message) {
+        // Clear all session data
+        localStorage.clear();
+        
+        // Show message to user
+        alert(message);
+        
+        // Redirect to login
+        window.location.replace('main.html');
+    }
+};
+
+// Initialize session management
+sessionManager.initialize();
+    </script>
+
+    <div class="container">
+        <header class="header">
+            <button class="back-button" onclick="window.location.href='dashboard.html'">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="title">Guest Network</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-sun"></i>
+            </button>
+        </header>
+        <!-- Add your guest network settings content here -->
+        <div class="network-card">
+            <div class="network-header">
+                <h2 class="network-title">Guest Network</h2>
+                <div class="network-toggle" id="networkToggle"></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">SSID</div>
+                <div class="detail-value" id="ssidValue">Loading...</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Bandwidth Limits</div>
+                <div class="bandwidth-controls">
+                    <div class="bandwidth-field">
+                        <span>↓</span>
+                        <span id="networkDownloadValue">Loading...</span>
+                        <span>Kbps</span>
+                    </div>
+                    <div class="bandwidth-field">
+                        <span>↑</span>
+                        <span id="networkUploadValue">Loading...</span>
+                        <span>Kbps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-row">
+                <div class="settings-icon">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-label">SSID</div>
+                    <div class="settings-value" id="settingsSSIDValue">Loading...</div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('ssid')">
+                    <i class="fas fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-label">Password</div>
+                    <div class="settings-value" id="passwordValue">••••••••</div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('password')">
+                    <i class="fas fa-pen"></i>
+                </button>
+            </div>
+
+            <!-- Add this after the password settings row in the settings-card div -->
+            <div class="settings-row">
+                <div class="settings-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-label">QR Code</div>
+                    <div class="settings-value">Scan to connect</div>
+                </div>
+                <button class="edit-button" onclick="showQRCode()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-icon">
+                    <i class="fas fa-gauge-high"></i>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-label">Bandwidth Limits</div>
+                    <div class="bandwidth-controls">
+                        <div class="bandwidth-field">
+                            <span>↓</span>
+                            <span id="settingsDownloadValue">Loading...</span>
+                            <span>Kbps</span>
+                        </div>
+                        <div class="bandwidth-field">
+                            <span>↑</span>
+                            <span id="settingsUploadValue">Loading...</span>
+                            <span>Kbps</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('bandwidth')">
+                    <i class="fas fa-pen"></i>
+                </button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-label">Schedule</div>
+                    <div class="settings-value" id="scheduleValue">Not scheduled</div>
+                </div>
+                <button class="edit-button" onclick="openEditPopup('schedule')">
+                    <i class="fas fa-pen"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="devices-card">
+            <h2 class="devices-title">
+                <i class="fas fa-laptop"></i>
+                Connected Devices
+            </h2>
+            <div class="devices-list">
+                <!-- Devices will be loaded dynamically -->
+                <div class="device-item" style="text-align: center; opacity: 0.7;">
+                    <i class="fas fa-info-circle"></i>
+                    Loading connected devices...
+                </div>
+            </div>
+        </div>
+
+        <!-- Add this after the devices-card div -->
+        <div class="devices-card blocked-devices">
+            <h2 class="devices-title">
+                <i class="fas fa-ban"></i>
+                Blocked Devices
+            </h2>
+            <div class="devices-list blocked-list">
+                <!-- Blocked devices will be loaded dynamically -->
+                <div class="device-item" style="text-align: center; opacity: 0.7;">
+                    <i class="fas fa-info-circle"></i>
+                    Loading blocked devices...
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-overlay" id="editPopup">
+            <div class="popup-content">
+                <h3 id="popupTitle">Edit SSID</h3>
+                <div class="popup-form" id="popupForm">
+                    <!-- Form content will be dynamically inserted -->
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-button cancel" onclick="closeEditPopup()">Cancel</button>
+                    <button class="popup-button save" onclick="currentEditField === 'schedule' ? saveSchedule() : saveChanges()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add this at the start of each page's script section
+
+        // Theme Management
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+
+        // Set initial theme based on localStorage
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                document.body.classList.remove('light-mode');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+
+        // Theme toggle handler
+        themeToggle.addEventListener('click', () => {
+            // Add rotation animation
+            themeIcon.style.animation = 'rotateIcon 0.5s ease-in-out';
+            
+            // Toggle theme classes
+            document.body.classList.toggle('light-mode');
+            
+            // Update icon and save theme preference
+            if (document.body.classList.contains('light-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'dark');
+            }
+
+            // Reset rotation animation
+            setTimeout(() => {
+                themeIcon.style.animation = '';
+            }, 500);
+        });
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', initializeTheme);
+
+        // Add to your existing script section
+        const networkToggle = document.getElementById('networkToggle');
+        const networkCard = document.querySelector('.network-card');
+        const ssidValue = document.getElementById('ssidValue');
+        const passwordValue = document.getElementById('passwordValue');
+
+        function loadGuestNetworkInfo() {
+            fetch('/cgi-bin/guest_wifi_config.sh')
+                .then(response => response.json())
+                .then(data => {
+                    // Set SSID in both places
+                    const networkCardSSID = document.getElementById('ssidValue');
+                    const settingsCardSSID = document.getElementById('settingsSSIDValue');
+                    const currentSSID = data.ssid || 'Unknown';
+                    
+                    // Update both SSID displays
+                    networkCardSSID.textContent = currentSSID;
+                    settingsCardSSID.textContent = currentSSID;
+                    
+                    // Set password display
+                    const hasPassword = data.password && data.password.length > 0;
+                    passwordValue.textContent = hasPassword ? '••••••••' : 'No Password';
+
+                    // Store password for edit form
+                    if (hasPassword) {
+                        passwordValue.dataset.currentPassword = data.password;
+                    }
+
+                    // Update UI based on guest network status
+                    if (data.status.trim() === '0') {
+                        networkToggle.classList.add('enabled');
+                        networkCard.classList.add('enabled');
+                    } else {
+                        networkToggle.classList.remove('enabled');
+                        networkCard.classList.remove('enabled');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching guest network info:', error);
+                    // Set default values on error
+                    document.getElementById('ssidValue').textContent = 'Error loading';
+                    document.getElementById('settingsSSIDValue').textContent = 'Error loading';
+                    passwordValue.textContent = '••••••••';
+                });
+        }
+
+        function toggleGuestNetwork() {
+            fetch('/cgi-bin/guest_wifi_config.sh?toggle=true')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status.trim() === '0') {
+                        networkToggle.classList.add('enabled');
+                        networkCard.classList.add('enabled');
+                    } else {
+                        networkToggle.classList.remove('enabled');
+                        networkCard.classList.remove('enabled');
+                    }
+                    // Reload network info after toggling
+                    loadGuestNetworkInfo();
+                })
+                .catch(error => {
+                    console.error('Error toggling guest network:', error);
+                    // Reload network info even on error
+                    loadGuestNetworkInfo();
+                });
+        }
+
+        // Keep the existing event listeners
+        document.addEventListener('DOMContentLoaded', loadGuestNetworkInfo);
+        networkToggle.addEventListener('click', toggleGuestNetwork);
+
+        let currentEditField = '';
+        const popup = document.getElementById('editPopup');
+        const popupForm = document.getElementById('popupForm');
+        const popupTitle = document.getElementById('popupTitle');
+
+        function openEditPopup(field) {
+            currentEditField = field;
+            popup.style.display = 'flex';
+            
+            switch(field) {
+                case 'ssid':
+                    const currentSSID = document.getElementById('settingsSSIDValue').textContent;
+                    popupTitle.textContent = 'Edit SSID';
+                    popupForm.innerHTML = `
+                        <input type="text" id="ssidInput" 
+                               value="${currentSSID}"
+                               placeholder="Enter SSID">
+                    `;
+                    break;
+                case 'password':
+                    popupTitle.textContent = 'Edit Password';
+                    // First fetch current password
+                    fetch('/cgi-bin/guest_wifi_config.sh')
+                        .then(response => response.json())
+                        .then(data => {
+                            popupForm.innerHTML = `
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="passwordInput" 
+                                           value="${data.password || ''}"
+                                           placeholder="Enter password">
+                                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            `;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching password:', error);
+                            popupForm.innerHTML = `
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="passwordInput" 
+                                           placeholder="Enter password">
+                                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            `;
+                        });
+                    break;
+                case 'bandwidth':
+                    const currentDownload = document.getElementById('networkDownloadValue').textContent;
+                    const currentUpload = document.getElementById('networkUploadValue').textContent;
+                    popupTitle.textContent = 'Edit Bandwidth Limits';
+                    popupForm.innerHTML = `
+                        <div class="bandwidth-controls">
+                            <div class="bandwidth-field">
+                                <span>↓</span>
+                                <input type="number" id="downloadInput" 
+                                       value="${currentDownload}"
+                                       placeholder="Download Kbps"
+                                       min="0">
+                            </div>
+                            <div class="bandwidth-field">
+                                <span>↑</span>
+                                <input type="number" id="uploadInput" 
+                                       value="${currentUpload}"
+                                       placeholder="Upload Kbps"
+                                       min="0">
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'schedule':
+                    popupTitle.textContent = 'Edit Schedule';
+                    popupForm.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-bottom: 5px;">
+                                Set the time range for the guest network to be active
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="time" id="startTime" required>
+                                <span style="color: rgba(255,255,255,0.7);">to</span>
+                                <input type="time" id="endTime" required>
+                            </div>
+                            <button class="popup-button" onclick="clearSchedule()" style="background: rgba(255,75,75,0.2);">
+                                Clear Schedule
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Load current schedule
+                    loadCurrentSchedule();
+                    break;
+            }
+        }
+
+        function closeEditPopup() {
+            popup.style.display = 'none';
+            currentEditField = '';
+        }
+
+        function saveChanges() {
+            if (currentEditField === 'ssid') {
+                const newSSID = document.getElementById('ssidInput').value;
+                
+                // Validate SSID
+                if (!newSSID || newSSID.length < 1 || newSSID.length > 32) {
+                    alert('SSID must be between 1 and 32 characters');
+                    return;
+                }
+
+                fetch('/cgi-bin/guest_wifi_config.sh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `ssid=${encodeURIComponent(newSSID)}`
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        // Update the displays regardless of response
+                        document.getElementById('ssidValue').textContent = newSSID;
+                        document.getElementById('settingsSSIDValue').textContent = newSSID;
+                        closeEditPopup();
+                        loadGuestNetworkInfo(); // Reload network info to get updated values
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        // Still update the display since the change was likely successful
+                        document.getElementById('ssidValue').textContent = newSSID;
+                        document.getElementById('settingsSSIDValue').textContent = newSSID;
+                        closeEditPopup();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating SSID:', err);
+                    alert('Network error while updating SSID');
+                });
+            }
+            else if (currentEditField === 'password') {
+                const newPassword = document.getElementById('passwordInput').value;
+                
+                // Validate password
+                if (!newPassword || newPassword.length < 8 || newPassword.length > 63) {
+                    alert('Password must be between 8 and 63 characters');
+                    return;
+                }
+
+                fetch('/cgi-bin/guest_wifi_config.sh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `password=${encodeURIComponent(newPassword)}`
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        alert('Password updated successfully');
+                        closeEditPopup();
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        // Still close the popup since the change was likely successful
+                        alert('Password updated successfully');
+                        closeEditPopup();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating password:', err);
+                    alert('Network error while updating password');
+                });
+            }
+            else if (currentEditField === 'bandwidth') {
+                const download = document.getElementById('downloadInput').value;
+                const upload = document.getElementById('uploadInput').value;
+
+                if (!download || !upload || isNaN(download) || isNaN(upload)) {
+                    alert('Please enter valid numbers for bandwidth limits');
+                    return;
+                }
+
+                fetch('/cgi-bin/guest_bandwidth.sh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `download=${encodeURIComponent(download)}&upload=${encodeURIComponent(upload)}`
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.status === 'error') {
+                            throw new Error(data.message || 'Failed to update bandwidth limits');
+                        }
+                        // Update all bandwidth displays
+                        document.getElementById('networkDownloadValue').textContent = download;
+                        document.getElementById('networkUploadValue').textContent = upload;
+                        document.getElementById('settingsDownloadValue').textContent = download;
+                        document.getElementById('settingsUploadValue').textContent = upload;
+                        closeEditPopup();
+                        alert('Bandwidth limits updated successfully');
+                    } catch (e) {
+                        throw new Error('Failed to update bandwidth limits: ' + e.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert(err.message);
+                });
+            } else if (currentEditField === 'schedule') {
+                const startTime = document.getElementById('startTime').value;
+                const endTime = document.getElementById('endTime').value;
+
+                if (!startTime || !endTime) {
+                    showNotification('Please set both start and end times', 'error');
+                    return;
+                }
+
+                // Convert HH:MM format to crontab format
+                const [startHour, startMinute] = startTime.split(':');
+                const [endHour, endMinute] = endTime.split(':');
+
+                const data = {
+                    start_time: `${startMinute} ${startHour} * * *`,
+                    end_time: `${endMinute} ${endHour} * * *`,
+                    action: 'schedule'
+                };
+
+                fetch('http://70.70.70.1/cgi-bin/schedule_guest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('scheduleValue').textContent = 
+                            `${startTime} to ${endTime}`;
+                        showNotification('Schedule updated successfully', 'success');
+                        closeEditPopup();
+                    } else {
+                        throw new Error(data.message || 'Failed to update schedule');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating schedule:', error);
+                    showNotification('Failed to update schedule', 'error');
+                });
+            }
+        }
+
+        // Update the loadCurrentSchedule function
+        function loadCurrentSchedule() {
+            fetch('http://70.70.70.1/cgi-bin/get_schedule.sh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        if (data.schedule) {
+                            const scheduleText = `${data.schedule.start} to ${data.schedule.end}`;
+                            document.getElementById('scheduleValue').textContent = scheduleText;
+                            
+                            // Update popup form if open
+                            if (document.getElementById('startTime')) {
+                                document.getElementById('startTime').value = data.schedule.start;
+                                document.getElementById('endTime').value = data.schedule.end;
+                            }
+                        } else {
+                            document.getElementById('scheduleValue').textContent = 'Not scheduled';
+                        }
+                    } else {
+                        throw new Error('Failed to load schedule');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading schedule:', error);
+                    document.getElementById('scheduleValue').textContent = 'Error loading schedule';
+                });
+        }
+
+        function saveSchedule() {
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            if (!startTime || !endTime) {
+                showNotification('Please set both start and end times', 'error');
+                return;
+            }
+
+            // Convert HH:MM format to crontab format
+            const [startHour, startMinute] = startTime.split(':');
+            const [endHour, endMinute] = endTime.split(':');
+
+            const data = {
+                start_time: `${startMinute} ${startHour} * * *`,
+                end_time: `${endMinute} ${endHour} * * *`,
+                action: 'schedule'
+            };
+
+            fetch('http://70.70.70.1/cgi-bin/schedule_guest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('scheduleValue').textContent = 
+                        `${startTime} to ${endTime}`;
+                    showNotification('Schedule updated successfully', 'success');
+                    closeEditPopup();
+                } else {
+                    throw new Error(data.message || 'Failed to update schedule');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating schedule:', error);
+                showNotification('Failed to update schedule', 'error');
+            });
+        }
+
+        function clearSchedule() {
+            fetch('http://70.70.70.1/cgi-bin/schedule_guest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'clear'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('scheduleValue').textContent = 'Not scheduled';
+                    showNotification('Schedule cleared', 'success');
+                    closeEditPopup();
+                } else {
+                    throw new Error(data.message || 'Failed to clear schedule');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing schedule:', error);
+                showNotification('Failed to clear schedule', 'error');
+            });
+        }
+
+        // Close popup when clicking outside
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                closeEditPopup();
+            }
+        });
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleButton = document.querySelector('.password-toggle i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.classList.remove('fa-eye');
+                toggleButton.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.classList.remove('fa-eye-slash');
+                toggleButton.classList.add('fa-eye');
+            }
+        }
+
+        // Add to your existing script section
+        document.querySelectorAll('.block-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const deviceItem = button.closest('.device-item');
+                const isBlocked = deviceItem.classList.toggle('blocked');
+                
+                if (isBlocked) {
+                    button.innerHTML = '<i class="fas fa-check"></i> Unblock';
+                    button.classList.add('unblock');
+                } else {
+                    button.innerHTML = '<i class="fas fa-ban"></i> Block';
+                    button.classList.remove('unblock');
+                }
+            });
+        });
+
+        // Updated loadConnectedDevices function
+        function loadConnectedDevices() {
+            // First get the list of blocked devices
+            fetch('http://70.70.70.1/cgi-bin/get-blocked')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const blockedMacs = Array.from(doc.querySelectorAll('table tr:not(:first-child) td:nth-child(2)'))
+                        .map(td => td.textContent);
+
+                    // Then load connected devices
+                    return fetch('/cgi-bin/guest_devices.sh')
+                        .then(response => response.json())
+                        .then(data => {
+                            const devicesList = document.querySelector('.devices-list');
+                            devicesList.innerHTML = '';
+
+                            if (!data.devices || data.devices.length === 0 || 
+                                (data.devices.length === 1 && data.devices[0].hostname === '*')) {
+                                devicesList.innerHTML = `
+                                    <div class="device-item" style="text-align: center; opacity: 0.7;">
+                                        <i class="fas fa-info-circle"></i>
+                                        No devices currently connected
+                                    </div>`;
+                                return;
+                            }
+
+                            // Show only unblocked devices
+                            const unblocked = data.devices.filter(device => 
+                                device.hostname !== '*' && !blockedMacs.includes(device.mac)
+                            );
+
+                            if (unblocked.length === 0) {
+                                devicesList.innerHTML = `
+                                    <div class="device-item" style="text-align: center; opacity: 0.7;">
+                                        <i class="fas fa-info-circle"></i>
+                                        No unblocked devices connected
+                                    </div>`;
+                                return;
+                            }
+
+                            unblocked.forEach(device => {
+                                devicesList.innerHTML += `
+                                    <div class="device-item">
+                                        <div class="device-header">
+                                            <div class="device-icon"><i class="fas fa-laptop"></i></div>
+                                            <div class="device-info">
+                                                <div class="device-name">${device.hostname}</div>
+                                                <div class="device-details">
+                                                    <span class="device-mac">MAC: ${device.mac}</span>
+                                                    <span class="device-ip">IP: ${device.ip}</span>
+                                                </div>
+                                            </div>
+                                            <button class="block-button" onclick="blockDevice('${device.mac}')">
+                                                <i class="fas fa-ban"></i> Block
+                                            </button>
+                                        </div>
+                                    </div>`;
+                            });
+                        });
+                })
+                .catch(err => {
+                    console.error('Failed to load devices:', err);
+                    const devicesList = document.querySelector('.devices-list');
+                    devicesList.innerHTML = `
+                        <div class="device-item" style="text-align: center; color: #ff4444;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load connected devices
+                        </div>`;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadConnectedDevices);
+
+        // Add this code after the loadConnectedDevices function:
+
+        function loadGuestBandwidthSettings() {
+            fetch('/cgi-bin/get_guest_bandwidth.sh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status !== "error") {
+                        const download = data.download;
+                        const upload = data.upload;
+                        const enabled = data.enabled === "1";
+
+                        // Update both display areas
+                        document.getElementById('networkDownloadValue').textContent = download;
+                        document.getElementById('networkUploadValue').textContent = upload;
+                        document.getElementById('settingsDownloadValue').textContent = download;
+                        document.getElementById('settingsUploadValue').textContent = upload;
+
+                        // Pre-fill popup form if opened
+                        if (document.getElementById('downloadInput')) {
+                            document.getElementById('downloadInput').value = download;
+                            document.getElementById('uploadInput').value = upload;
+                        }
+
+                        // Optional: If disabled, indicate it visually
+                        if (!enabled) {
+                            console.log("Guest SQM is currently disabled");
+                        }
+                    } else {
+                        console.error('Error loading guest bandwidth:', data.message);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch guest bandwidth:', err));
+        }
+
+        // Add to the DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
+            loadGuestNetworkInfo();
+            loadConnectedDevices();
+            loadBlockedDevices(); // Add this line
+            loadGuestBandwidthSettings();  // Add this line
+            loadCurrentSchedule(); // Add this line
+        });
+
+        // Update the blockDevice function
+        function blockDevice(mac) {
+            const button = event.target.closest('.block-button');
+            const deviceItem = button.closest('.device-item');
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // MAC address encoding
+            const encodedMac = mac.replace(/:/g, '-');
+
+            fetch(`http://70.70.70.1/cgi-bin/block-devices?${encodedMac}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Server response:', text); // Debug log
+                    if (text.includes("blocked successfully")) {
+                        // Remove the device from connected devices list
+                        deviceItem.remove();
+                        
+                        showNotification('Device blocked successfully', 'success');
+                        
+                        // Refresh both lists
+                        setTimeout(() => {
+                            loadConnectedDevices();
+                            loadBlockedDevices();
+                        }, 1000);
+                    } else {
+                        throw new Error('Failed to block device: ' + text);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error blocking device:', error);
+                    button.innerHTML = '<i class="fas fa-ban"></i> Block';
+                    showNotification('Failed to block device', 'error');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
+        }
+
+        // Add the notification function if not already present
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add this function to load blocked devices
+        function loadBlockedDevices() {
+            fetch('http://70.70.70.1/cgi-bin/get-blocked')
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the HTML to extract device information
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const devices = [];
+                    
+                    // Get all table rows except the header
+                    const rows = doc.querySelectorAll('table tr:not(:first-child)');
+                    
+                    // Extract device information from each row
+                    rows.forEach(row => {
+                        const columns = row.querySelectorAll('td');
+                        if (columns.length === 3) {
+                            devices.push({
+                                rule_name: columns[0].textContent,
+                                mac: columns[1].textContent,
+                                status: columns[2].textContent
+                            });
+                        }
+                    });
+
+                    // Update the UI with the extracted information
+                    const blockedList = document.querySelector('.blocked-list');
+                    blockedList.innerHTML = '';
+
+                    if (devices.length === 0) {
+                        blockedList.innerHTML = `
+                            <div class="device-item" style="text-align: center; opacity: 0.7;">
+                                <i class="fas fa-info-circle"></i>
+                                No blocked devices
+                            </div>`;
+                        return;
+                    }
+
+                    devices.forEach(device => {
+                        if (device.status === 'Active') {
+                            blockedList.innerHTML += `
+                                <div class="device-item blocked">
+                                    <div class="device-header">
+                                        <div class="device-icon"><i class="fas fa-laptop"></i></div>
+                                        <div class="device-info">
+                                            <div class="device-name">Blocked Device</div>
+                                            <div class="device-details">
+                                                <span class="device-mac">MAC: ${device.mac}</span>
+                                                <span class="device-status">Status: ${device.status}</span>
+                                            </div>
+                                        </div>
+                                        <button class="block-button unblock" onclick="unblockDevice('${device.mac}')">
+                                            <i class="fas fa-check"></i> Unblock
+                                        </button>
+                                    </div>
+                                </div>`;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading blocked devices:', error);
+                    const blockedList = document.querySelector('.blocked-list');
+                    blockedList.innerHTML = `
+                        <div class="device-item" style="text-align: center; color: #ff4444;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load blocked devices
+                        </div>`;
+                });
+        }
+
+        // Add the unblock device function
+        function unblockDevice(mac) {
+            const button = event.target.closest('.block-button');
+            const deviceItem = button.closest('.device-item');
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // MAC address encoding - keep the colons as the script handles URL decoding
+            fetch(`http://70.70.70.1/cgi-bin/unblock-device?mac=${mac}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json(); // Changed to json() since script returns JSON
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Remove from blocked devices list
+                        deviceItem.remove();
+                        
+                        showNotification('Device unblocked successfully', 'success');
+                        
+                        // Refresh both lists
+                        setTimeout(() => {
+                            loadConnectedDevices();
+                            loadBlockedDevices();
+                        }, 1000);
+                    } else {
+                        throw new Error(data.message || 'Failed to unblock device');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error unblocking device:', error);
+                    button.innerHTML = '<i class="fas fa-check"></i> Unblock';
+                    showNotification('Failed to unblock device', 'error');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
+        }
+
+        // Add this function to your script section
+        function showQRCode() {
+            // Fetch current network info
+            fetch('/cgi-bin/guest_wifi_config.sh')
+                .then(response => response.json())
+                .then(data => {
+                    const ssid = data.ssid;
+                    const password = data.password;
+                    
+                    // Create WiFi connection string
+                    const wifiString = `WIFI:T:WPA;S:${ssid};P:${password};;`;
+                    
+                    // Show popup with QR code
+                    popupTitle.textContent = 'Scan to Connect';
+                    popupForm.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                            <div id="qrcode" style="background: white; padding: 15px; border-radius: 8px;"></div>
+                            <div style="text-align: center; opacity: 0.8;">
+                                <div>Network: ${ssid}</div>
+                                <div>Password: ${password}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Generate QR code
+                    const qrcode = new QRCode(document.getElementById("qrcode"), {
+                        text: wifiString,
+                        width: 256,
+                        height: 256,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    
+                    // Replace default popup buttons with custom ones
+                    const popupActions = document.querySelector('.popup-actions');
+                    popupActions.innerHTML = `
+                        <button class="popup-button cancel" onclick="closeEditPopup()">Close</button>
+                        <button class="popup-button save" onclick="downloadQRCode('${ssid}')">
+                            <i class="fas fa-download"></i> Download QR Code
+                        </button>
+                    `;
+                    
+                    popup.style.display = 'flex';
+                })
+                .catch(error => {
+                    console.error('Error generating QR code:', error);
+                    showNotification('Failed to generate QR code', 'error');
+                });
+        }
+
+        // Add this new function to handle QR code download
+        function downloadQRCode(ssid) {
+            // Get the QR code canvas
+            const qrCanvas = document.querySelector('#qrcode canvas');
+            
+            if (qrCanvas) {
+                // Convert canvas to blob
+                qrCanvas.toBlob((blob) => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `WiFi-${ssid}-QR.png`;
+                    
+                    // Trigger download
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Cleanup
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showNotification('QR code downloaded successfully', 'success');
+                }, 'image/png');
+            } else {
+                showNotification('Failed to download QR code', 'error');
+            }
+        }
+        
+    </script>
+</body>
+</html>

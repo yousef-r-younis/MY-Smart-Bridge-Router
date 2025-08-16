@@ -1,0 +1,203 @@
+#!/bin/sh
+# Resilient OpenWrt Wireless Devices CGI Script with Hostname Support
+# Place in /www/cgi-bin/main_devices.sh and make executable
+
+# Set content type to JSON
+echo "Content-type: application/json"
+echo "Cache-Control: no-cache"
+echo ""
+
+# Function to find AP interfaces
+find_ap_interface() {
+    # First, try phy0-ap0
+    if iw dev phy0-ap0 info >/dev/null 2>&1; then
+        echo "phy0-ap0"
+        return 0
+    fi
+
+    # Then try phy1-ap0
+    if iw dev phy1-ap0 info >/dev/null 2>&1; then
+        echo "phy1-ap0"
+        return 0
+    fi
+
+    # Look for all wireless interfaces
+    for IFACE in $(iw dev | grep Interface | awk '{print $2}'); do
+        # Check if interface has "ap" in name
+        if echo "$IFACE" | grep -q "ap"; then
+            echo "$IFACE"
+            return 0
+        fi
+
+        # Check if this is an AP interface by checking its mode
+        MODE=$(iw dev "$IFACE" info 2>/dev/null | grep "type" | awk '{print $2}')
+        if [ "$MODE" = "AP" ]; then
+            echo "$IFACE"
+            return 0
+        fi
+    done
+
+    # Fallback: Check physical devices directly
+    for PHY in $(ls /sys/class/ieee80211/ 2>/dev/null); do
+        # Get interfaces for this phy that are in AP mode
+        AP_IFACES=$(iw phy "$PHY" info | grep -A 2 "Interface" | grep "type AP" | awk '{print $2}')
+        if [ -n "$AP_IFACES" ]; then
+            echo "$AP_IFACES"
+            return 0
+        fi
+    done
+
+    # Last resort: return the original interface name
+    echo "phy0-ap0"
+}
+
+# Function to get hostname for an IP/MAC
+get_hostname() {
+    local IP="$1"
+    local MAC="$2"
+    local HOSTNAME=""
+
+    # Method 1: Check DHCP leases for hostname
+    if [ -n "$IP" ] && [ -f "/var/dhcp.leases" ]; then
+        HOSTNAME=$(grep "$IP" /var/dhcp.leases 2>/dev/null | awk '{print $4}' | head -1)
+    fi
+
+    # Method 2: Check DHCP leases by MAC if no IP match
+    if [ -z "$HOSTNAME" ] && [ -n "$MAC" ] && [ -f "/var/dhcp.leases" ]; then
+        HOSTNAME=$(grep -i "$MAC" /var/dhcp.leases 2>/dev/null | awk '{print $4}' | head -1)
+    fi
+
+    # Method 3: Try reverse DNS lookup
+    if [ -z "$HOSTNAME" ] && [ -n "$IP" ] && [ "$IP" != "null" ]; then
+        HOSTNAME=$(nslookup "$IP" 2>/dev/null | grep "name =" | awk '{print $4}' | sed 's/\.$//' | head -1)
+    fi
+
+    # Method 4: Check /etc/hosts
+    if [ -z "$HOSTNAME" ] && [ -n "$IP" ] && [ "$IP" != "null" ]; then
+        HOSTNAME=$(grep "$IP" /etc/hosts 2>/dev/null | awk '{print $2}' | head -1)
+    fi
+
+    # Method 5: Check UCI DHCP static leases
+    if [ -z "$HOSTNAME" ] && [ -n "$MAC" ]; then
+        HOSTNAME=$(uci show dhcp 2>/dev/null | grep -i "$MAC" | grep "name=" | cut -d"'" -f2 | head -1)
+    fi
+
+    # Method 6: Check /tmp/hosts/ directory (dnsmasq additional hosts)
+    if [ -z "$HOSTNAME" ] && [ -n "$IP" ] && [ "$IP" != "null" ]; then
+        HOSTNAME=$(grep "$IP" /tmp/hosts/* 2>/dev/null | awk '{print $2}' | head -1)
+    fi
+
+    # Clean up hostname
+    if [ -n "$HOSTNAME" ] && [ "$HOSTNAME" != "*" ] && [ "$HOSTNAME" != "-" ]; then
+        echo "$HOSTNAME"
+    else
+        echo "null"
+    fi
+}
+
+# Start JSON output
+echo "{"
+echo "  \"timestamp\": \"$(date +%s)\","
+echo "  \"wireless_devices\": ["
+
+# Find AP interface
+AP_IFACE=$(find_ap_interface)
+
+# Get stations connected to AP interface
+STATIONS=$(iw dev "$AP_IFACE" station dump 2>/dev/null | grep "Station" | awk '{print $2}')
+
+# If no stations found, try alternative methods
+if [ -z "$STATIONS" ]; then
+    # Try using 'wlan0' or other common names if available
+    for ALT_IFACE in wlan0 wlan1 $(iw dev | grep Interface | awk '{print $2}'); do
+        TEMP_STATIONS=$(iw dev "$ALT_IFACE" station dump 2>/dev/null | grep "Station" | awk '{print $2}')
+        if [ -n "$TEMP_STATIONS" ]; then
+            STATIONS="$TEMP_STATIONS"
+            AP_IFACE="$ALT_IFACE"
+            break
+        fi
+    done
+fi
+
+# Count stations for proper JSON formatting
+TOTAL_STATIONS=$(echo "$STATIONS" | wc -w)
+CURRENT=0
+
+# Process each station
+for STATION in $STATIONS; do
+  CURRENT=$((CURRENT + 1))
+
+  # Get station details
+  STATION_INFO=$(iw dev "$AP_IFACE" station get "$STATION" 2>/dev/null)
+  if [ -z "$STATION_INFO" ]; then
+    STATION_INFO=$(iw dev "$AP_IFACE" station dump | grep -A 50 "$STATION" 2>/dev/null)
+  fi
+
+  # Extract basic information
+  SIGNAL=$(echo "$STATION_INFO" | grep "signal:" | awk '{print $2}' | head -1)
+  SIGNAL_NUM=${SIGNAL%% *}
+
+  # Calculate quality
+  if [ -n "$SIGNAL_NUM" ]; then
+    SIGNAL_ABS=${SIGNAL_NUM#-}
+    if [ "$SIGNAL_ABS" -le 30 ]; then
+      QUALITY=100
+    elif [ "$SIGNAL_ABS" -ge 100 ]; then
+      QUALITY=0
+    else
+      QUALITY=$(( (100 - SIGNAL_ABS) * 100 / 70 ))
+    fi
+  else
+    QUALITY="null"
+    SIGNAL_NUM="null"
+  fi
+
+  # Get data statistics
+  TX_PACKETS=$(echo "$STATION_INFO" | grep "tx packets:" | awk '{print $3}')
+  RX_PACKETS=$(echo "$STATION_INFO" | grep "rx packets:" | awk '{print $3}')
+  TX_BYTES=$(echo "$STATION_INFO" | grep "tx bytes:" | awk '{print $3}')
+  RX_BYTES=$(echo "$STATION_INFO" | grep "rx bytes:" | awk '{print $3}')
+
+  # Get bitrates (clean up tabs and special chars)
+  TX_BITRATE=$(echo "$STATION_INFO" | grep "tx bitrate:" | sed 's/.*tx bitrate:[[:space:]]*\(.*\)/\1/' | head -1)
+  RX_BITRATE=$(echo "$STATION_INFO" | grep "rx bitrate:" | sed 's/.*rx bitrate:[[:space:]]*\(.*\)/\1/' | head -1)
+
+  # Get connected time
+  CONNECTED_TIME=$(echo "$STATION_INFO" | grep "connected time:" | awk '{print $3" "$4}')
+
+  # Get IP address from ARP table
+  IP_ADDR=$(grep -i "$STATION" /proc/net/arp | awk '{print $1}')
+  if [ -z "$IP_ADDR" ]; then
+    IP_ADDR=$(grep -i "$STATION" /var/dhcp.leases 2>/dev/null | awk '{print $3}')
+  fi
+
+  # Get hostname
+  HOSTNAME=$(get_hostname "$IP_ADDR" "$STATION")
+
+  # Output JSON for this device - keeping the original JSON structure plus hostname
+  echo "    {"
+  echo "      \"mac\": \"$STATION\","
+  echo "      \"ip\": \"${IP_ADDR:-null}\","
+  echo "      \"hostname\": \"$HOSTNAME\","
+  echo "      \"interface\": \"$AP_IFACE\"," # Use the actual interface name we found
+  echo "      \"signal\": ${SIGNAL_NUM:-null},"
+  echo "      \"quality\": ${QUALITY:-null},"
+  echo "      \"tx_packets\": ${TX_PACKETS:-null},"
+  echo "      \"rx_packets\": ${RX_PACKETS:-null},"
+  echo "      \"tx_bytes\": ${TX_BYTES:-null},"
+  echo "      \"rx_bytes\": ${RX_BYTES:-null},"
+  echo "      \"tx_bitrate\": \"${TX_BITRATE}\","
+  echo "      \"rx_bitrate\": \"${RX_BITRATE}\","
+  echo "      \"connected_time\": \"${CONNECTED_TIME}\""
+
+  # Add comma if not the last station
+  if [ $CURRENT -lt $TOTAL_STATIONS ]; then
+    echo "    },"
+  else
+    echo "    }"
+  fi
+done
+
+# Close JSON
+echo "  ]"
+echo "}"

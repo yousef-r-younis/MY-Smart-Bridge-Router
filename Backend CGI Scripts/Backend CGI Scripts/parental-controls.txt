@@ -1,0 +1,568 @@
+#!/bin/sh
+
+# CGI header
+echo "Content-type: text/html"
+echo ""
+
+# HTML header
+echo "<!DOCTYPE html>"
+echo "<html>"
+echo "<head><title>Parental Controls</title></head>"
+echo "<body>"
+
+# Configuration
+RULES_FILE="/etc/parental_controls.rules"
+FIREWALL_PREFIX="parental-control"
+
+# Process CGI parameters
+eval $(echo "$QUERY_STRING" | sed -e 's/&/;/g')
+
+# Function to initialize the parental control system
+init_system() {
+    # Create rules file if it doesn't exist
+    touch "$RULES_FILE"
+
+    # Restart firewall to load new configuration
+    /etc/init.d/firewall restart
+    echo "<p>Parental control system initialized</p>"
+}
+
+# Function to list all parental control rules
+list_rules() {
+    echo "<h2>Parental Control Rules:</h2>"
+    if [ -s "$RULES_FILE" ]; then
+        echo "<pre>"
+        cat "$RULES_FILE" | sort
+        echo "</pre>"
+    else
+        echo "<p>No rules found</p>"
+    fi
+}
+
+# Function to validate time format (HH:MM:SS)
+validate_time() {
+    if ! echo "$1" | grep -qE '^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'; then
+        return 1
+    fi
+    return 0
+}
+
+# Function to validate day of week format
+validate_day() {
+    if ! echo "$1" | grep -qE '^(mon|tue|wed|thu|fri|sat|sun)$'; then
+        return 1
+    fi
+    return 0
+}
+
+# Function to validate MAC address format
+validate_mac() {
+    if ! echo "$1" | grep -qE '^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$'; then
+        return 1
+    fi
+    return 0
+}
+
+# Function to validate IP address format
+validate_ip() {
+    if ! echo "$1" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+        return 1
+    fi
+
+    # Check each octet is in range 0-255
+    IFS='.'
+    set -- $1
+    for octet; do
+        if [ "$octet" -lt 0 ] || [ "$octet" -gt 255 ]; then
+            unset IFS
+            return 1
+        fi
+    done
+    unset IFS
+
+    return 0
+}
+
+# Function to add a block_all rule (block internet access completely)
+add_block_all_rule() {
+    local rule_id="$1"
+    local mac_list="$2"
+    local days="$3"
+    local start_time="$4"
+    local end_time="$5"
+
+    # Validate input
+    if [ -z "$rule_id" ] || [ -z "$mac_list" ]; then
+        echo "<p>Error: Missing parameters</p>"
+        echo "<p>Usage: ?cmd=add_block_all&rule_id=ID&mac_list=MAC1,MAC2&days=mon,tue,wed&start_time=HH:MM:SS&end_time=HH:MM:SS</p>"
+        return 1
+    fi
+
+    # Check if rule ID already exists
+    if grep -q "^$rule_id " "$RULES_FILE"; then
+        echo "<p>Error: Rule ID '$rule_id' already exists</p>"
+        return 1
+    fi
+
+    # Validate MAC addresses
+    IFS=','
+    for mac in $mac_list; do
+        if ! validate_mac "$mac"; then
+            echo "<p>Error: Invalid MAC address format: $mac</p>"
+            unset IFS
+            return 1
+        fi
+    done
+    unset IFS
+
+    # Validate time if provided
+    if [ -n "$start_time" ] && ! validate_time "$start_time"; then
+        echo "<p>Error: Invalid start time format: $start_time (use HH:MM:SS)</p>"
+        return 1
+    fi
+
+    if [ -n "$end_time" ] && ! validate_time "$end_time"; then
+        echo "<p>Error: Invalid end time format: $end_time (use HH:MM:SS)</p>"
+        return 1
+    fi
+
+    # Validate days if provided
+    if [ -n "$days" ]; then
+        IFS=','
+        for day in $days; do
+            if ! validate_day "$day"; then
+                echo "<p>Error: Invalid day format: $day</p>"
+                unset IFS
+                return 1
+            fi
+        done
+        unset IFS
+    fi
+
+    # Add entry to rules file
+    echo "$rule_id block_all \"$mac_list\" \"$days\" \"$start_time\" \"$end_time\" \"\"" >> "$RULES_FILE"
+
+    # Create firewall rule
+    local rule_number=$(uci add firewall rule)
+    uci set firewall.@rule[-1].name="${FIREWALL_PREFIX}-${rule_id}"
+    uci set firewall.@rule[-1].src="lan"
+    uci set firewall.@rule[-1].dest="wan"
+    uci set firewall.@rule[-1].proto="all"
+
+    # Set MAC addresses
+    IFS=','
+    for mac in $mac_list; do
+        uci add_list firewall.@rule[-1].src_mac="$mac"
+    done
+    unset IFS
+
+    # Set time restrictions
+    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+        uci set firewall.@rule[-1].timestart="$start_time"
+        uci set firewall.@rule[-1].timestop="$end_time"
+    fi
+
+    # Set day restrictions
+    if [ -n "$days" ]; then
+        uci set firewall.@rule[-1].weekdays="$days"
+    fi
+
+    # Set target to REJECT
+    uci set firewall.@rule[-1].target="REJECT"
+
+    # Enable rule for forwarded traffic
+    uci set firewall.@rule[-1].dest_port=""
+    uci set firewall.@rule[-1].src_port=""
+
+    # Save and apply changes
+    uci commit firewall
+    /etc/init.d/firewall reload
+
+    echo "<p>Added internet blocking rule for MAC(s): $mac_list</p>"
+    if [ -n "$days" ]; then
+        echo "<p>Days: $days</p>"
+    fi
+    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+        echo "<p>Time: $start_time - $end_time</p>"
+    fi
+
+    return 0
+}
+
+# Function to add a block_sites rule (block specific websites)
+add_block_sites_rule() {
+    local rule_id="$1"
+    local mac_list="$2"
+    local days="$3"
+    local start_time="$4"
+    local end_time="$5"
+    local websites="$6"
+
+    # Validate input
+    if [ -z "$rule_id" ] || [ -z "$mac_list" ] || [ -z "$websites" ]; then
+        echo "<p>Error: Missing parameters</p>"
+        echo "<p>Usage: ?cmd=add_block_sites&rule_id=ID&mac_list=MAC1,MAC2&days=mon,tue,wed&start_time=HH:MM:SS&end_time=HH:MM:SS&websites=site1.com,site2.com</p>"
+        return 1
+    fi
+
+    # Check if rule ID already exists
+    if grep -q "^$rule_id " "$RULES_FILE"; then
+        echo "<p>Error: Rule ID '$rule_id' already exists</p>"
+        return 1
+    fi
+
+    # Validate MAC addresses
+    IFS=','
+    for mac in $mac_list; do
+        if ! validate_mac "$mac"; then
+            echo "<p>Error: Invalid MAC address format: $mac</p>"
+            unset IFS
+            return 1
+        fi
+    done
+    unset IFS
+
+    # Validate time if provided
+    if [ -n "$start_time" ] && ! validate_time "$start_time"; then
+        echo "<p>Error: Invalid start time format: $start_time (use HH:MM:SS)</p>"
+        return 1
+    fi
+
+    if [ -n "$end_time" ] && ! validate_time "$end_time"; then
+        echo "<p>Error: Invalid end time format: $end_time (use HH:MM:SS)</p>"
+        return 1
+    fi
+
+    # Validate days if provided
+    if [ -n "$days" ]; then
+        IFS=','
+        for day in $days; do
+            if ! validate_day "$day"; then
+                echo "<p>Error: Invalid day format: $day</p>"
+                unset IFS
+                return 1
+            fi
+        done
+        unset IFS
+    fi
+
+    # Add entry to rules file
+    echo "$rule_id block_sites \"$mac_list\" \"$days\" \"$start_time\" \"$end_time\" \"$websites\"" >> "$RULES_FILE"
+
+    # Resolve domains to IPs
+    echo "<p>Resolving domains:</p>"
+    echo "<ul>"
+
+    # Create an array to store resolved IPs
+    resolved_ips=""
+    IFS=','
+    for domain in $websites; do
+        # Resolve domain to IP
+        local ip=$(nslookup -type=A "$domain" | grep -A1 'Name:' | grep 'Address:' | tail -n1 | awk '{print $2}')
+        if [ -n "$ip" ] && validate_ip "$ip"; then
+            # For each resolved IP, create a separate firewall rule
+            local rule_number=$(uci add firewall rule)
+            uci set firewall.@rule[-1].name="${FIREWALL_PREFIX}-${rule_id}-$(echo $domain | tr '.' '-')"
+            uci set firewall.@rule[-1].src="lan"
+            uci set firewall.@rule[-1].dest="wan"
+            uci set firewall.@rule[-1].proto="all"
+
+            # Set destination IP
+            uci set firewall.@rule[-1].dest_ip="$ip"
+
+            # Set MAC addresses
+            for mac in $mac_list; do
+                uci add_list firewall.@rule[-1].src_mac="$mac"
+            done
+
+            # Set time restrictions
+            if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+                uci set firewall.@rule[-1].timestart="$start_time"
+                uci set firewall.@rule[-1].timestop="$end_time"
+            fi
+
+            # Set day restrictions
+            if [ -n "$days" ]; then
+                uci set firewall.@rule[-1].weekdays="$days"
+            fi
+
+            # Set target to REJECT
+            uci set firewall.@rule[-1].target="REJECT"
+
+            # Enable rule for forwarded traffic
+            uci set firewall.@rule[-1].dest_port=""
+            uci set firewall.@rule[-1].src_port=""
+
+            # Add to resolved IPs list (for display purposes)
+            if [ -z "$resolved_ips" ]; then
+                resolved_ips="$domain: $ip"
+            else
+                resolved_ips="$resolved_ips, $domain: $ip"
+            fi
+
+            echo "<li>$domain: $ip</li>"
+        else
+            echo "<li>Warning: Could not resolve $domain</li>"
+        fi
+    done
+    unset IFS
+    echo "</ul>"
+
+    # Save and apply changes
+    uci commit firewall
+    /etc/init.d/firewall reload
+
+    echo "<p>Added website blocking rule for MAC(s): $mac_list</p>"
+    echo "<p>Blocked websites: $websites</p>"
+    if [ -n "$days" ]; then
+        echo "<p>Days: $days</p>"
+    fi
+    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+        echo "<p>Time: $start_time - $end_time</p>"
+    fi
+
+    return 0
+}
+
+# Function to delete a rule
+delete_rule() {
+    local rule_id="$1"
+
+    # Validate input
+    if [ -z "$rule_id" ]; then
+        echo "<p>Error: Missing rule ID</p>"
+        echo "<p>Usage: ?cmd=delete&rule_id=ID</p>"
+        return 1
+    fi
+
+    # Check if rule exists
+    if ! grep -q "^$rule_id " "$RULES_FILE"; then
+        echo "<p>Error: Rule ID '$rule_id' not found</p>"
+        return 1
+    fi
+
+    # Get rule type
+    local rule_type=$(grep "^$rule_id " "$RULES_FILE" | awk '{print $2}')
+
+    # Remove from rules file
+    sed -i "/^$rule_id /d" "$RULES_FILE"
+
+    # Find and remove firewall rules
+    if [ "$rule_type" = "block_all" ]; then
+        # For block_all, there's a single rule
+        local rule_section=$(uci show firewall | grep "name='${FIREWALL_PREFIX}-${rule_id}'" | cut -d. -f1-2)
+        if [ -n "$rule_section" ]; then
+            uci delete $rule_section
+        else
+            echo "<p>Warning: Firewall rule not found</p>"
+        fi
+    elif [ "$rule_type" = "block_sites" ]; then
+        # For block_sites, there are multiple rules (one per site)
+        for rule_section in $(uci show firewall | grep "name='${FIREWALL_PREFIX}-${rule_id}-" | cut -d. -f1-2); do
+            if [ -n "$rule_section" ]; then
+                uci delete $rule_section
+            fi
+        done
+    fi
+
+    # Save and apply changes
+    uci commit firewall
+    /etc/init.d/firewall reload
+    echo "<p>Deleted rule: $rule_id</p>"
+
+    return 0
+}
+
+# Function to update a rule
+update_rule() {
+    local rule_id="$1"
+
+    # Validate input
+    if [ -z "$rule_id" ]; then
+        echo "<p>Error: Missing rule ID</p>"
+        echo "<p>Usage: ?cmd=update&rule_id=ID&...</p>"
+        return 1
+    fi
+
+    # Check if rule exists
+    if ! grep -q "^$rule_id " "$RULES_FILE"; then
+        echo "<p>Error: Rule ID '$rule_id' not found</p>"
+        return 1
+    fi
+
+    # Get current rule details
+    local rule_line=$(grep "^$rule_id " "$RULES_FILE")
+    local rule_type=$(echo "$rule_line" | awk '{print $2}')
+
+    # Delete the current rule
+    delete_rule "$rule_id"
+
+    # Create a new rule with updated parameters
+    if [ "$rule_type" = "block_all" ]; then
+        add_block_all_rule "$rule_id" "$mac_list" "$days" "$start_time" "$end_time"
+    elif [ "$rule_type" = "block_sites" ]; then
+        add_block_sites_rule "$rule_id" "$mac_list" "$days" "$start_time" "$end_time" "$websites"
+    fi
+
+    echo "<p>Updated rule: $rule_id</p>"
+    return 0
+}
+
+# Function to apply all rules from rules file
+apply_all_rules() {
+    # Remove existing parental control rules
+    for rule in $(uci show firewall | grep "name='${FIREWALL_PREFIX}-" | cut -d. -f1-2); do
+        uci delete $rule
+    done
+
+    # Add all rules from rules file
+    while IFS=' ' read -r id type mac_list days start_time end_time websites; do
+        # Remove quotes
+        mac_list=$(echo $mac_list | sed 's/^"//;s/"$//')
+        days=$(echo $days | sed 's/^"//;s/"$//')
+        start_time=$(echo $start_time | sed 's/^"//;s/"$//')
+        end_time=$(echo $end_time | sed 's/^"//;s/"$//')
+        websites=$(echo $websites | sed 's/^"//;s/"$//')
+
+        if [ "$type" = "block_all" ]; then
+            # Create block_all rule
+            local rule_number=$(uci add firewall rule)
+            uci set firewall.@rule[-1].name="${FIREWALL_PREFIX}-${id}"
+            uci set firewall.@rule[-1].src="lan"
+            uci set firewall.@rule[-1].dest="wan"
+            uci set firewall.@rule[-1].proto="all"
+
+            # Set MAC addresses
+            IFS=','
+            for mac in $mac_list; do
+                uci add_list firewall.@rule[-1].src_mac="$mac"
+            done
+            unset IFS
+
+            # Set time restrictions
+            if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+                uci set firewall.@rule[-1].timestart="$start_time"
+                uci set firewall.@rule[-1].timestop="$end_time"
+            fi
+
+            # Set day restrictions
+            if [ -n "$days" ]; then
+                uci set firewall.@rule[-1].weekdays="$days"
+            fi
+
+            # Set target to REJECT
+            uci set firewall.@rule[-1].target="REJECT"
+
+            # Enable rule for forwarded traffic
+            uci set firewall.@rule[-1].dest_port=""
+            uci set firewall.@rule[-1].src_port=""
+
+            echo "<p>Applied internet blocking rule: $id</p>"
+
+        elif [ "$type" = "block_sites" ]; then
+            # For block_sites, create multiple individual rules
+            IFS=','
+            for domain in $websites; do
+                # Resolve domain to IP
+                local ip=$(nslookup -type=A "$domain" | grep -A1 'Name:' | grep 'Address:' | tail -n1 | awk '{print $2}')
+                if [ -n "$ip" ] && validate_ip "$ip"; then
+                    # Create individual rule for each website and MAC
+                    local rule_number=$(uci add firewall rule)
+                    uci set firewall.@rule[-1].name="${FIREWALL_PREFIX}-${id}-$(echo $domain | tr '.' '-')"
+                    uci set firewall.@rule[-1].src="lan"
+                    uci set firewall.@rule[-1].dest="wan"
+                    uci set firewall.@rule[-1].proto="all"
+
+                    # Set destination IP
+                    uci set firewall.@rule[-1].dest_ip="$ip"
+
+                    # Set MAC addresses
+                    for mac in $mac_list; do
+                        uci add_list firewall.@rule[-1].src_mac="$mac"
+                    done
+
+                    # Set time restrictions
+                    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+                        uci set firewall.@rule[-1].timestart="$start_time"
+                        uci set firewall.@rule[-1].timestop="$end_time"
+                    fi
+
+                    # Set day restrictions
+                    if [ -n "$days" ]; then
+                        uci set firewall.@rule[-1].weekdays="$days"
+                    fi
+
+                    # Set target to REJECT
+                    uci set firewall.@rule[-1].target="REJECT"
+
+                    # Enable rule for forwarded traffic
+                    uci set firewall.@rule[-1].dest_port=""
+                    uci set firewall.@rule[-1].src_port=""
+                fi
+            done
+            unset IFS
+
+            echo "<p>Applied website blocking rule: $id</p>"
+        fi
+    done < "$RULES_FILE"
+
+    # Save and apply changes
+    uci commit firewall
+    /etc/init.d/firewall reload
+    echo "<p>All rules applied</p>"
+}
+
+# Main interface
+echo "<h1>Parental Controls</h1>"
+
+# Process command
+case "$cmd" in
+    init)
+        init_system
+        ;;
+    list)
+        list_rules
+        ;;
+    add_block_all)
+        add_block_all_rule "$rule_id" "$mac_list" "$days" "$start_time" "$end_time"
+        ;;
+    add_block_sites)
+        add_block_sites_rule "$rule_id" "$mac_list" "$days" "$start_time" "$end_time" "$websites"
+        ;;
+    delete)
+        delete_rule "$rule_id"
+        ;;
+    update)
+        update_rule "$rule_id"
+        ;;
+    apply)
+        apply_all_rules
+        ;;
+    *)
+        echo "<h2>Usage:</h2>"
+        echo "<ul>"
+        echo "<li><a href='?cmd=init'>Initialize system</a></li>"
+        echo "<li><a href='?cmd=list'>List all rules</a></li>"
+        echo "<li>Block all internet: ?cmd=add_block_all&rule_id=ID&mac_list=MAC1,MAC2&days=mon,tue,wed&start_time=HH:MM:SS&end_time=HH:MM:SS</li>"
+        echo "<li>Block websites: ?cmd=add_block_sites&rule_id=ID&mac_list=MAC1,MAC2&days=mon,tue,wed&start_time=HH:MM:SS&end_time=HH:MM:SS&websites=site1.com,site2.com</li>"
+        echo "<li>Delete rule: ?cmd=delete&rule_id=ID</li>"
+        echo "<li>Update rule: ?cmd=update&rule_id=ID&mac_list=MAC1,MAC2&days=mon,tue,wed&start_time=HH:MM:SS&end_time=HH:MM:SS&websites=site1.com,site2.com</li>"
+        echo "<li><a href='?cmd=apply'>Apply all rules</a></li>"
+        echo "</ul>"
+
+        echo "<h3>Examples:</h3>"
+        echo "<ul>"
+        echo "<li><a href='?cmd=add_block_all&rule_id=kids-bedtime&mac_list=AA:BB:CC:DD:EE:FF&days=mon,tue,wed,thu,fri&start_time=21:00:00&end_time=07:00:00'>Block kids devices at bedtime</a></li>"
+        echo "<li><a href='?cmd=add_block_sites&rule_id=no-social-media&mac_list=AA:BB:CC:DD:EE:FF&websites=facebook.com,instagram.com,tiktok.com'>Block social media sites</a></li>"
+        echo "</ul>"
+
+        # Show current rules
+        list_rules
+        ;;
+esac
+
+# HTML footer
+echo "</body>"
+echo "</html>"
+
+exit 0
