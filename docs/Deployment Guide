@@ -1,0 +1,81 @@
+This appendix serves as a guide for clients or end users to deploy and begin using the smart OpenWrt-based router system after it has been preconfigured and tested. The router is delivered with all services—such as VPN, DNS filtering, guest network control, and device management—fully set up. This guide explains how to connect, access, and operate the system immediately after unboxing.
+
+1 - What’s in the Box
+-	1x Preconfigured Raspberry Pi 4 Smart Router
+-	1x MicroSD card (inserted) with OpenWrt installed
+-	1x USB Wi-Fi adapter with antenna
+-	1x Power cable (USB-C)
+-	1x Ethernet cable (for optional wired LAN)
+-	1x Quick start card with credentials
+
+2 - Initial Setup
+	Step 1: Power the Router
+•	Plug the USB-C power cable into the Raspberry Pi.
+•	Wait approximately 60–90 seconds for the router to fully boot.
+	Step 2: Connect to the Wi-Fi
+•	On your laptop or smartphone, go to Wi-Fi settings and connect to:
+SSID: Virus Distribution Center
+Password: Senior700800900 (can be changed later)
+	Optional: 
+	You can also plug the Ethernet cable into a laptop or PC for a direct wired connection.
+
+3 - Accessing the Dashboard
+	Step 1: Open your browser
+	Type the following into the address bar: http://70.70.70.1/main.html
+	Step 2: Log in
+o	Username: root
+o	Password: tonystark
+
+4 - Using the features
+	Once logged in, you can access all core features through the navigation bar:
+	Dashboard
+-	See internet speed, system stats, and connected devices
+-	Block or unblock unwanted devices
+-	Restart the router safely
+	VPN Page
+-	Toggle VPN on or off
+-	Choose between Japan, USA, or Netherlands VPN servers
+-	View logs to verify encryption is active
+	AdGuard Page
+-	Turn DNS filtering on/off
+-	Monitor blocked queries and parental controls
+-	View DNS logs and statistics
+	Guest Network Page
+-	Enable or disable the guest Wi-Fi
+-	Set a different SSID/password for guests
+-	Generate a QR code for easy connection
+-	Manage guest device access
+	Settings Page
+-	Change the Wi-Fi name and password
+-	Scan for nearby networks
+-	Reconfigure LAN IP, reboot the router
+-	Set port forwarding rules
+
+5 - Recommended First Time Access
+	After logging in for the first time, it’s recommended to:
+-	Update SSID and password if desired
+-	Set parental controls or device blocks if needed
+-	Enable AdGuard DNS filtering to block ads and trackers
+-	Start VPN for encrypted traffic and IP masking
+-	Use the guest network when sharing Wi-Fi with visitors
+
+6 - Troubleshooting and Support
+Dashboard not loading?
+Make sure you're connected to the router's Wi-Fi and typed http://70.70.70.1/main.html correctly.
+Internet not working?
+Repair the Wi-Fi from the settings page or unplug and plug it back in.
+Slow speeds?
+Disable VPN and test again. Some VPN servers may be under high load.
+Need help?
+Refer to the User Manual (Appendix B).
+
+7 - Security Notice
+	This router is configured with:
+-	Admin-only access
+-	No remote access enabled by default
+-	Local-only dashboard access
+-	DNS privacy through AdGuard
+-	Traffic encryption via OpenVPN
+	For best practices, update passwords regularly and avoid sharing admin access.
+
+	This deployment guide ensures that the end user can immediately use the system without technical assistance. It turns a complex setup into a plug-and-play experience—while still retaining advanced control features for power users.
