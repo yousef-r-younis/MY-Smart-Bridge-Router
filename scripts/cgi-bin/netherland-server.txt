@@ -1,0 +1,15 @@
+#!/bin/ash
+
+# Kill any existing VPN connections
+killall openvpn 2>/dev/null
+
+# Wait for 4 seconds
+sleep 4
+
+# Start Netherlands VPN
+openvpn --config /etc/openvpn/neth.conf & disown
+
+# Output response for CGI
+echo "Content-type: text/plain"
+echo ""
+echo "VPN Netherlands started"

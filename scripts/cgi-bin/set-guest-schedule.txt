@@ -1,0 +1,65 @@
+#!/bin/sh
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo ""
+
+# Function to convert HH:MM to cron format (M H * * *)
+time_to_cron() {
+    time_input="$1"
+    if [ -n "$time_input" ]; then
+        hours=$(echo "$time_input" | cut -d':' -f1)
+        minutes=$(echo "$time_input" | cut -d':' -f2)
+        # Remove leading zeros and create cron format
+        hours=$(printf "%d" "$hours")
+        minutes=$(printf "%d" "$minutes")
+        echo "$minutes $hours * * *"
+    fi
+}
+
+# Read JSON input
+read -r input
+
+# Extract action from JSON
+action=$(echo "$input" | jsonfilter -e '@.action')
+
+case "$action" in
+    "schedule")
+        # Get start and end times in HH:MM format
+        start_time_html=$(echo "$input" | jsonfilter -e '@.start_time')
+        end_time_html=$(echo "$input" | jsonfilter -e '@.end_time')
+
+        # Convert to cron format
+        start_time=$(time_to_cron "$start_time_html")
+        end_time=$(time_to_cron "$end_time_html")
+
+        if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+            # Remove existing schedule entries
+            sed -i '/guest_network/d' /etc/crontabs/root
+
+            # Add new schedule entries with full paths
+            echo "$start_time /usr/bin/guest_network enable" >> /etc/crontabs/root
+            echo "$end_time /usr/bin/guest_network disable" >> /etc/crontabs/root
+
+            # Restart cron to apply changes
+            /etc/init.d/cron restart
+
+            logger "Guest network schedule updated: enable at $start_time_html ($start_time), disable at $end_time_html ($end_time)"
+            echo '{"status":"success","message":"Schedule updated"}'
+        else
+            echo '{"status":"error","message":"Invalid time format"}'
+        fi
+        ;;
+    "clear")
+        # Remove schedule entries
+        sed -i '/guest_network/d' /etc/crontabs/root
+
+        # Restart cron to apply changes
+        /etc/init.d/cron restart
+
+        logger "Guest network schedule cleared"
+        echo '{"status":"success","message":"Schedule cleared"}'
+        ;;
+    *)
+        echo '{"status":"error","message":"Invalid action"}'
+        ;;
+esac

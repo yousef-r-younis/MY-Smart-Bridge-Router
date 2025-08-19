@@ -1,0 +1,33 @@
+#!/bin/sh
+echo "Content-type: application/json"
+echo ""
+
+# Define API endpoints and credentials
+STATS_URL="http://70.70.70.1:8080/control/stats"
+USERNAME="Senior_adBlock"
+PASSWORD="adblock700800900"
+
+# Fetch statistics
+STATS=$(curl -s -u "$USERNAME:$PASSWORD" "$STATS_URL")
+
+# Extract relevant statistics
+TOTAL_QUERIES=$(echo "$STATS" | grep -o '"num_dns_queries":[0-9]*' | cut -d':' -f2)
+BLOCKED_QUERIES=$(echo "$STATS" | grep -o '"num_blocked_filtering":[0-9]*' | cut -d':' -f2)
+ADULT_BLOCKED=$(echo "$STATS" | grep -o '"num_replaced_parental":[0-9]*' | cut -d':' -f2)
+
+# Calculate percentage if total queries is not zero
+if [ "$TOTAL_QUERIES" -ne 0 ]; then
+    BLOCKED_PERCENTAGE=$(awk "BEGIN {printf \"%.2f\", ($BLOCKED_QUERIES / $TOTAL_QUERIES) * 100}")
+else
+    BLOCKED_PERCENTAGE="0.00"
+fi
+
+# Output statistics in JSON format
+cat << EOF
+{
+  "total_queries": $TOTAL_QUERIES,
+  "blocked_queries": $BLOCKED_QUERIES,
+  "adult_blocked": $ADULT_BLOCKED,
+  "blocked_percentage": $BLOCKED_PERCENTAGE
+}
+EOF

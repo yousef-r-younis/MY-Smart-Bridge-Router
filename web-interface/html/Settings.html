@@ -1,0 +1,490 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+
+        <link rel="stylesheet" href="css/theme.css">
+        <link rel="preload" href="webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="css2/all.min.css">
+
+<style>
+
+    .title {
+        padding: 5px;
+    }
+
+    .wifi-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .password-field {
+        position: relative;
+    }
+
+    .wifi-controls i {
+        position: absolute;
+        right: 15px;
+        top: 14px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .wifi-controls p {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+    }
+
+    .status-dot {
+        background-color: rgb(153, 255, 0);
+    }
+
+    .maintenance-info {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .lan-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+    }
+
+    .lan-info span {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+        border: 1px solid var(--dark-border);
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+    .wifi-scan-controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .port-controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .connect-button {
+        padding: 10px 17px;
+        border: none;
+        border-radius: 5px;
+        background: var(--vpn-on-background);
+        color: var(--dark-text);
+    }
+
+    .connect-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: var(--dark-container-background);
+        border: 2px solid var(--dark-border);
+        border-radius: 10px;
+        padding: 20px;
+        z-index: 9999;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .popup-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .port-forwarding-list {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 10px;
+        border-top: 1px solid var(--dark-border);
+        padding: 10px 5px;
+        overflow-y: auto;
+        max-height: 300px;
+    }
+
+    .port-rule {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: 1px solid var(--dark-border);
+        background-color: var(--dark-container-background);
+    }
+
+   .port-preset {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--dark-container-background);
+        border: 2px solid var(--dark-border);
+        border-radius: 12px;
+        padding: 20px 25px;
+        z-index: 9999;
+        text-align: center;
+        max-height: 400px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        animation: fadeIn 0.25s ease-out;
+    }
+
+    .presets-list {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 10px;
+        border-top: 1px solid var(--dark-border);
+        padding: 10px 5px;
+        overflow-y: auto;
+        max-height: 300px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--dark-border) transparent;
+    }
+
+    .presets-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    .presets-list::-webkit-scrollbar-thumb {
+        background: var(--dark-border);
+        border-radius: 4px;
+    }
+    .presets-list::-webkit-scrollbar-thumb:hover {
+        background: rgb(255, 143, 143);
+    }
+
+    .preset-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 2px solid var(--dark-border);
+        border-radius: 8px;
+        padding: 12px;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+        cursor: pointer;
+    }
+
+    .preset-item:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent-color);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translate(-50%, -48%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+
+    .addPortRule {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        gap: 12px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--dark-container-background);
+        border: 2px solid var(--dark-border);
+        border-radius: 12px;
+        padding: 20px;
+        z-index: 5000;
+    }
+
+    .rule-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        gap: 12px;
+        border-top: 1px solid var(--dark-border);
+        padding: 10px 5px;
+    }
+
+    .ip-inputs {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+    }
+
+    .protocol-inputs {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: bold;
+    }
+
+    .addPortRule input {
+        width:auto
+    }
+
+</style>
+</head>
+<body>
+    <div class="container">
+
+        <header class="title-container">
+            <button class="back-button" onclick="window.location.href = 'Dashboard.html';">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+                <h1 class="title"><i class="fas fa-gear"></i> Network Settings</h1>
+            <button class="moon"></button>
+        </header>
+
+        <div class="card">
+            <div class="status-indicator">
+                <h2>Wi-Fi Settings</h2>
+                <div class="status-dot"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="wifi-controls">
+                <p>SSID</p>
+                <input class="ssid-input" type="text" placeholder="SSID">
+                <p>Password</p>
+                <div class="password-field">
+                    <input class="password-input" type="password" placeholder="Password">
+                    <i class="fas fa-eye" id="toggle-eye" onclick = "toggleVisibility()"></i>
+                </div>
+                <p>Channel</p>
+                <select class="channel-select">
+                    <option value="auto">Auto</option>
+                    <option value="1">1 (2.412 GHz)</option>
+                    <option value="6">6 (2.437 GHz)</option>
+                    <option value="11">11 (2.462 GHz)</option>
+                </select>
+                <button onclick="applyWifiChanges()">Apply Changes</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="maintenance-info">
+                <p>If you're experiencing connection issues, connect via ethernet and click Repair WiFi button. (Connection will be lost for a few seconds)</p>
+            </div>
+            <button onclick="repairWifiConnection()">
+                <i class="fas fa-wrench"></i> Repair WiFi
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>LAN Settings</h2>
+            <div class="lan-info">
+                <p>Router IP Address</p>
+                <span id="lan-ip">--</span>
+                <p>Subnet Mask</p>
+                <span id="lan-subnet">--</span>
+                <p>DNS Server</p>
+                <span id="lan-dns">--</span>
+                <p>Protocol</p>
+                <span>DHCP</span>
+                <p>DHCP Range Start</p>
+                <span id="lan-dhcp-start">--</span>
+                <p>DHCP Range End</p>
+                <span id="lan-dhcp-end">--</span>
+                <p>Lease Time</p>
+                <span id="lan-lease-time">--</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="wifi-scan-controls">
+                <h2>Available Networks <span id="wifi-count">(0)</span></h2>
+                <button onclick="scanAndDisplayWifi()">
+                    Scan Networks <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ESSID</th>
+                            <th>Address</th>
+                            <th>Encryption</th>
+                            <th>Channel</th>
+                            <th>Frequency</th>
+                            <th>Band</th>
+                            <th>Signal Strength</th>
+                            <th>Quality</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="wifi-list">
+                        <tr>
+                            <td colspan="9">No networks found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="connect-popup">
+            <h2>Connect to Network</h2>
+            <div class="divider"></div>
+            <h4>Network Name</h4>
+            <span id="networkName">AIKO</span>
+            <h4>Password</h4>
+            <input type="password" id="connect-password" placeholder="Password">
+            <div class="popup-buttons">
+            <button id="connectButton" onclick="connectToWifi()">Connect</button>
+            <button onclick="closeConnectPopup()">Cancel</button>
+            </div>
+        </div>
+
+        <div class="notification-popup" id="notification-popup">
+            <h2 id="notification-message"></h2>
+        </div>
+
+        <div class="card">
+            <h2>Port Forwarding</h2>
+            <div class="port-controls">
+                <button onclick="openAddRulePopup()">
+                    <i class="fas fa-plus"></i>
+                    Add Rule
+                </button>
+                <button onclick="togglePreset()">
+                    <i class="fas fa-list"></i>
+                    Show Presets
+                </button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Protocol</th>
+                            <th>Remote Port</th>
+                            <th>Local IP</th>
+                            <th>Local Port</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="port-forwarding-list">
+                        <tr>
+                            <td colspan="6">No rules found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="port-preset" style = "display: none;">
+            <h2>Port Forwarding Presets</h2>
+            <div class="presets-list">
+
+                <div class="preset-item">
+                        <h4>Minecraft Server</h4>
+                        <p class="preset-description">Default Minecraft server port</p>
+                        <p class="preset-details">Port: 25565 | Protocol: TCP</p>
+                </div>
+
+                <div class="preset-item">
+                        <h4>Remote Desktop</h4>
+                        <p class="preset-description">Windows Remote Desktop Protocol (RDP)</p>
+                        <p class="preset-details">Port: 3389 | Protocol: TCP</p>
+                </div>
+
+                <div class="preset-item">
+                        <h4>SSH</h4>
+                        <p class="preset-description">Secure Shell for remote access</p>
+                        <p class="preset-details">Port: 22 | Protocol: TCP</p>
+                </div>
+
+                <div class="preset-item">
+                        <h4>Steam</h4>
+                        <p class="preset-description">Steam client and game servers</p>
+                        <p class="preset-details">Port: 27015 | Protocol: TCP, UDP</p>
+                </div>
+
+                <div class="preset-item">
+                        <h4>Plex Media Server</h4>
+                        <p class="preset-description">Plex streaming service</p>
+                        <p class="preset-details">Port: 32400 | Protocol: TCP</p>
+                </div>
+
+                <div class="preset-item">
+                        <h4>HTTP/HTTPS</h4>
+                        <p class="preset-description">Web server ports</p>
+                        <p class="preset-details">Port: 80,443 | Protocol: TCP</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="addPortRule" style = "display: none;">
+            <h2>Add Rule</h2>
+            <div class="rule-controls">
+                <h3>Rule name</h3>
+                <input type="text" id="ruleName" placeholder="Rule name">
+                <h3>Protocol</h3>
+                <div class="protocol-inputs">
+                    <span>
+                        Any <input type="checkbox" id="anyCheckbox" value="Any">
+                    </span>
+                    <span>
+                        TCP <input type="checkbox" id="tcpCheckbox" value="TCP">
+                    </span>
+                    <span>
+                        UDP <input type="checkbox" id="udpCheckbox" value="UDP">
+                    </span>
+                    <span>
+                        ICMP <input type="checkbox" id="icmpCheckbox" value="ICMP">
+                    </span>
+                </div>
+                <h3>External port</h3>
+                <input type="number" id="externalPort" placeholder="Remote port">
+                <h3>Internal ip</h3>
+                <div class="ip-inputs">
+                    <input type="number" min = "0" max = "255" id="internalIp1" placeholder="70">
+                    .
+                    <input type="number" min = "0" max = "255" id="internalIp2" placeholder="70">
+                    .
+                    <input type="number" min = "0" max = "255" id="internalIp3" placeholder="70">
+                    .
+                    <input type="number" min = "0" max = "255" id="internalIp4" placeholder="100">
+                </div>
+                <h3>Internal port</h3>
+                <input type="number" id="internalPort" placeholder="Local port">
+                <button onclick="addRule()">Add Rule</button>
+                <button onclick="closeAddRulePopup()">Cancel</button>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script type="module" src="js/Settings.js"></script>
+</body>
+</html>
+

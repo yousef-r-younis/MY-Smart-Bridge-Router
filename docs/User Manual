@@ -1,0 +1,108 @@
+This user manual provides step-by-step instructions for accessing and using the smart router system’s web dashboard. The system is designed to be user-friendly and is accessible via any modern web browser by navigating to the router’s IP address (default: http://70.70.70.1/main.html). The following sections describe each page, its purpose, and the available features.
+
+1. Login Page (main.html)
+	Purpose:
+-	The login page restricts access to authorized users. It includes a password prompt along with a hint to assist legitimate users.
+	How to Use:
+-	Open a browser and navigate to http://70.70.70.1/main.html
+-	Enter the administrator password as indicated (for example, "tonystark" as per the default configuration).
+-	A successful login grants access to the main dashboard.
+	Visual Cues:
+-	The page is simple and uncluttered, emphasizing security and ease of access.
+
+2. Dashboard Page (dashboard.html)
+	Purpose:
+-	This is the central hub for monitoring and managing the router. It displays real-time router statistics and offers control options.
+	Key Features:
+-	Internet Speed Test: Displays current download, upload, and ping values via data from the speed test CGI script.
+-	Traffic and Device Statistics: Shows the number of connected devices along with bandwidth usage.
+-	Device Management: Allows blocking or unblocking of specific devices by their MAC address.
+-	Reboot/Logout Options: Provides buttons to reboot the router or log out of the session.
+	How to Use:
+-	After login, the dashboard automatically loads and displays live data.
+-	Use the toggle buttons to initiate a speed test or to manage connected devices.
+-	Click on individual device entries to block or unblock them, based on your network policy.
+-	Use the reboot option when necessary; note that the router will be temporarily unavailable during the reboot process.
+	Visual Cues:
+-	Graphical elements such as icons, dynamic charts, and responsive widgets provide immediate visual feedback on network status.
+
+
+3. VPN Management (vpn.html)
+	Purpose:
+-	This page allows the user to manage the VPN service integrated into the router.
+	Key Features:
+-	VPN Toggle: Enable or disable the VPN service with a single tap. 
+-	Server Selection: Choose from available VPN server configurations (e.g., Japan, USA, Netherlands).
+-	VPN Logs: View connection logs to monitor VPN activity and troubleshoot any issues.
+	How to Use:
+-	Navigate to the VPN page after logging in.
+-	Use the toggle switch to activate or deactivate the VPN service.
+-	Select a desired server from the dropdown menu; the system will automatically reconnect using the chosen configuration.
+-	Review the VPN logs displayed on the page to check connection status and troubleshoot if needed.
+	Visual Cues:
+-	Clear, color-coded indicators (e.g., green for active VPN, red for inactive) help identify the current VPN state.
+
+
+4. AdGuard Home Controls (adguard.html)
+	Purpose:
+-	This page is dedicated to managing the DNS filtering and ad-blocking functionalities provided by AdGuard Home, as well as parental controls using firewall traffic rules.
+	Key Features:
+-	DNS Filtering Toggle: Enable or disable DNS filtering with a simple switch.
+-	Real-Time DNS Stats: Visualized using Chart.js, these stats display the number of DNS queries, blocked queries, and other relevant data.
+-	Parental Controls: Configure parental control settings to restrict access to certain types of content.
+-	DNS Log: Review detailed logs of DNS queries and filtering activity.
+	How to Use:
+-	Open the AdGuard page from the dashboard.
+-	Use the toggle switch to turn DNS filtering on or off.
+-	Review the real-time chart and log to monitor DNS activity.
+-	Adjust parental control settings as required by following on-screen instructions.
+	Visual Cues:
+-	Interactive charts and graphs provide a visual representation of DNS traffic, while clear labels and toggles make control straightforward.
+
+5. Guest Network Management (guest.html)
+	Purpose:
+-	This page is designed for managing the guest network, allowing for separate access control and usage policies for non-primary users.
+	Key Features:
+-	Guest Network Toggle: Enable or disable the guest network.
+-	SSID and Password Configuration: Set or update the guest network’s SSID and password.
+-	Bandwidth Limit: Configure bandwidth restrictions for the guest network.
+-	QR Code Generation: Automatically generate a QR code for easy guest connection.
+-	Dvice Management: Manage devices connected to the guest network separately from the main network.
+	How to Use:
+-	Access the Guest Network page from the main dashboard.
+-	Use the provided toggle to enable or disable the guest network.
+-	Enter the desired SSID and password; apply changes to update the guest network settings.
+-	Set bandwidth limits as needed and use the generated QR code for quick configuration on guest devices.
+-	Monitor and manage connected guest devices through the interface.
+	Visual Cues:
+-	The layout is optimized for clarity with separate sections for configuration, real-time monitoring, and QR code display.
+
+6. Advanced Settings (settings.html)
+	Purpose:
+-	The settings page allows administrators to fine-tune network configurations and perform advanced tasks.
+	Key Features:
+-	Wi-Fi Configuration: Change SSID and password for the main network.
+-	LAN Settings: Update LAN IP configuration and DHCP settings.
+-	Network Scan: Initiate a network scan to detect available Wi-Fi networks.
+-	Port Forwarding Rules: Add, edit, or remove port forwarding rules to manage external access to internal services.
+-	Repair Wi-Fi: Provide an option to repair the Wi-Fi, ensuring changes take effect and resolving potential issues.
+	How to Use:
+-	Navigate to the Settings page from the dashboard.
+-	Update configuration fields as needed and click “Apply” to commit changes.
+-	Use the network scan feature to view available networks and choose the best one.
+-	Adjust port forwarding rules as required for your applications.
+	Visual Cues:
+-	Form fields, dropdown menus, and clearly labeled buttons ensure that even advanced tasks can be executed with ease.
+
+7. General User Guidelines
+1. Accessing the System:
+The dashboard is accessible only within the local network at http://70.70.70.1. Ensure that you are connected to the router’s network (either via LAN or Wi-Fi) before attempting to access the system.
+2. Security Measures:
+The system is configured with admin-only access. Keep your credentials secure and change them periodically.
+All sensitive actions (like rebooting the router or altering network settings) require proper authentication.
+3. Troubleshooting:
+If the dashboard does not load or a feature is unresponsive, try connecting to the router via Ethernet cable and repairing the Wi-Fi via the Settings page.
+For issues with VPN or AdGuard, review the corresponding logs on vpn.html and adguard.html. These system logs are accessible and provide detailed error messages to assist in troubleshooting.
+4. Maintenance:
+Regularly check for firmware updates and review the configuration to ensure optimal performance.
+Use the network scan and device management features to monitor for any unauthorized access.

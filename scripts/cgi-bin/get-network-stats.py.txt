@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+import json
+import time
+import sys
+
+
+def get_interface_stats(interface):
+    """Read network interface statistics from /proc/net/dev"""
+    try:
+        with open('/proc/net/dev', 'r') as f:
+            for line in f:
+                if interface in line:
+                    # Split and extract relevant fields
+                    fields = line.split()
+                    return {
+                        'rx_bytes': int(fields[1]),
+                        'rx_packets': int(fields[2]),
+                        'tx_bytes': int(fields[9]),
+                        'tx_packets': int(fields[10])
+                    }
+    except (FileNotFoundError, ValueError, IndexError):
+        return None
+    return None
+
+
+def get_bandwidth_stats(interface="br-lan", sample_interval=1):
+    """Get bandwidth statistics for the specified interface"""
+
+    # Get initial stats
+    stats_before = get_interface_stats(interface)
+    if not stats_before:
+        return {"error": f"Interface {interface} not found"}
+
+    # Convert to MB
+    rx_mb = stats_before['rx_bytes'] / 1048576
+    tx_mb = stats_before['tx_bytes'] / 1048576
+
+    # Wait for sample interval
+    time.sleep(sample_interval)
+
+    # Get stats after interval
+    stats_after = get_interface_stats(interface)
+    if not stats_after:
+        return {"error": f"Interface {interface} not found"}
+
+    # Calculate rates in KB/s
+    rx_rate = (stats_after['rx_bytes'] - stats_before['rx_bytes']) / sample_interval / 1024
+    tx_rate = (stats_after['tx_bytes'] - stats_before['tx_bytes']) / sample_interval / 1024
+
+    # Return JSON structure
+    return {
+        "download": {
+            "total": f"{rx_mb:.2f} MB",
+            "packets": str(stats_after['rx_packets']),
+            "rate": f"{rx_rate:.2f} KB/s"
+        },
+        "upload": {
+            "total": f"{tx_mb:.2f} MB",
+            "packets": str(stats_after['tx_packets']),
+            "rate": f"{tx_rate:.2f} KB/s"
+        }
+    }
+
+
+def main():
+    """Main CGI function"""
+    # Print HTTP headers
+    print("Content-Type: application/json")
+    print()  # Empty line required after headers
+
+    # Get and output bandwidth stats
+    result = get_bandwidth_stats()
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

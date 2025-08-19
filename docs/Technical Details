@@ -1,0 +1,269 @@
+This appendix provides in-depth technical details of the implementation to complement the high-level overview provided in Chapter 4. The following sections document the exact configuration files, scripts, and commands used to set up the OpenWrt-based router system on the Raspberry Pi 4 Model B.
+
+1 - OpenWrt System Configuration
+	The following are the key configuration files used in our OpenWrt setup.
+	/etc/config/network:
+config device
+        option name 'br-lan'
+        option type 'bridge'
+        list ports 'eth0'
+
+config interface 'lan'
+        option device 'br-lan'
+        option proto 'static'
+        option ipaddr '70.70.70.1'
+        option netmask '255.255.255.0'
+        option ip6assign '60'
+        list dns '70.70.70.1'
+
+config interface 'wwan'
+        option proto 'dhcp'
+        option ipaddr '192.168.0.133'
+        option netmask '255.255.255.0'
+        option gateway '192.168.0.1'
+        list dns '8.8.8.8'
+
+config interface 'vpnclient'
+        option proto 'none'
+        option device 'tun0'
+
+config device
+        option type 'bridge'
+        option name 'br-guest'
+        option bridge_empty '1'
+
+config interface 'guest'
+        option proto 'static'
+        option device 'br-guest'
+        option ipaddr '70.70.71.1'
+        option netmask '255.255.255.0'
+        list dns '70.70.70.1'
+
+/etc/config/wireless:
+config wifi-device 'radio0'
+        option type 'mac80211'
+        option channel '1'
+        option hwmode '11g'
+        option path 'platform/soc/fe300000.mmcnr/mmc_host/mmc1/mmc1:0001/mmc1:0001:1'
+        option htmode 'HT20'
+        option disabled '0'
+
+config wifi-device 'radio1'
+        option type 'mac80211'
+        option path 'scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.1/1-1.1:1.0'
+        option channel '6'
+        option band '2g'
+        option htmode 'HT20'
+        option disabled '0'
+
+config wifi-iface 'default_radio1'
+        option device 'radio1'
+        option network 'lan'
+        option mode 'ap'
+        option ssid 'Virus Distribution Center'
+        option encryption 'psk2'
+        option key 'Senior700800900'
+
+config wifi-iface 'wifinet2'
+        option device 'radio1'
+        option mode 'ap'
+        option ssid 'guest wifi'
+        option encryption 'psk2'
+        option key 'Guest700800900'
+        option network 'guest'
+        option isolate '1'
+        option disabled '1'
+
+config wifi-iface 'wifinet3'
+        option device 'radio0'
+        option mode 'sta'
+        option network 'wwan'
+        option ssid 'Loading...'
+        option encryption 'psk2'
+        option key 'home_network123&'
+
+/etc/config/firewall:
+config zone 'lan'
+        option name 'lan'
+        option input 'ACCEPT'
+        option output 'ACCEPT'
+        option forward 'ACCEPT'
+        list network 'lan'
+
+config zone 'wan'
+        option name 'wan'
+        option input 'ACCEPT'
+        option output 'ACCEPT'
+        option forward 'REJECT'
+        option masq '1'
+        option mtu_fix '1'
+        list device 'tun+'
+        list network 'wan'
+        list network 'wan6'
+        list network 'wwan'
+
+config forwarding
+        option src 'lan'
+        option dest 'wan'
+
+config rule
+        option name 'Allow-AdGuard-Admin'
+        option src '*'
+        option dest_port '3000'
+        option target 'ACCEPT'
+
+config zone
+        option name 'guest'
+        option input 'REJECT'
+        option output 'ACCEPT'
+        option forward 'REJECT'
+        list network 'guest'
+
+config forwarding
+        option src 'guest'
+        option dest 'wan'
+
+config rule
+        option name 'Allow-DNS-Guest'
+        option src 'guest'
+        option dest_port '53'
+        option target 'ACCEPT'
+
+config rule
+        option name 'Allow-DHCP-Guest'
+        list proto 'udp'
+        option src 'guest'
+        option dest_port '67'
+        option target 'ACCEPT'
+
+config include 'customfilter'
+        option path '/etc/firewall.customfilter'
+        option reload '1'
+
+2 - CGI Scripts
+	Below are representative samples of the custom Bash CGI scripts used in the project. (For brevity, only key scripts are shown. The full set is available in the project repository.)
+adguard-stats:
+#!/bin/sh
+echo "Content-type: text/plain"
+echo ""
+STATS_URL="http://70.70.70.1:8080/control/stats"
+QUERYLOG_URL="http://70.70.70.1:8080/control/querylog"
+USERNAME="Senior_adBlock"
+PASSWORD="adblock700800900"
+STATS=$(curl -s -u "$USERNAME:$PASSWORD" "$STATS_URL")
+TOTAL_QUERIES=$(echo "$STATS" | grep -o '"num_dns_queries":[0-9]*' | cut -d':' -f2)
+BLOCKED_QUERIES=$(echo "$STATS" | grep -o '"num_blocked_filtering":[0-9]*' | cut -d':' -f2)
+ADULT_BLOCKED=$(echo "$STATS" | grep -o '"num_replaced_parental":[0-9]*' | cut -d':' -f2)
+if [ "$TOTAL_QUERIES" -ne 0 ]; then
+    BLOCKED_PERCENTAGE=$(awk "BEGIN {printf \"%.2f\", ($BLOCKED_QUERIES / $TOTAL_QUERIES) * 100}")
+else
+    BLOCKED_PERCENTAGE="0.00"
+fi
+echo "total_queries=$TOTAL_QUERIES"
+echo "blocked_queries=$BLOCKED_QUERIES"
+echo "adult_blocked=$ADULT_BLOCKED"
+echo "blocked_percentage=$BLOCKED_PERCENTAGE"
+echo "--- recent_queries ---"
+QUERYLOG=$(curl -s -u "$USERNAME:$PASSWORD" "$QUERYLOG_URL?limit=100")
+echo "$QUERYLOG" | grep -o '"question":{[^}]*}' | while read -r QUESTION; do
+    DOMAIN=$(echo "$QUESTION" | grep -o '"name":"[^"]*' | cut -d'"' -f4)
+    TYPE=$(echo "$QUESTION" | grep -o '"type":"[^"]*' | cut -d'"' -f4)
+    echo "$DOMAIN ($TYPE)"
+done
+
+connect_wifi:
+#!/bin/sh
+set -e
+QUERY_STRING=$(echo "$QUERY_STRING" | sed 's/%20/ /g' | sed 's/+/ /g')
+SSID=$(echo "$QUERY_STRING" | awk -F '&' '{for (i=1; i<=NF; i++) { if ($i ~ /^ssid=/) { sub(/^ssid=/, "", $i); print $i } }}')
+PASSWORD=$(echo "$QUERY_STRING" | awk -F '&' '{for (i=1; i<=NF; i++) { if ($i ~ /^password=/) { sub(/^password=/, "", $i); print $i } }}')
+SSID=$(printf '%b' "${SSID//%/\\x}")
+PASSWORD=$(printf '%b' "${PASSWORD//%/\\x}")
+echo "Content-type: text/plain"
+echo ""
+echo "Debug: Received SSID='$SSID', PASSWORD='$PASSWORD'" >> /tmp/wifi_debug.log
+if [ -z "$SSID" ]; then
+    echo "Error: SSID is required"
+    exit 1
+fi
+if [ -z "$PASSWORD" ]; then
+    ENCRYPTION_TYPE="none"
+else
+    ENCRYPTION_TYPE="psk2"
+fi
+uci set wireless.wifinet3.ssid="$SSID"
+uci set wireless.wifinet3.encryption="$ENCRYPTION_TYPE"
+uci delete wireless.wifinet3.key 2>/dev/null || true
+if [ "$ENCRYPTION_TYPE" != "none" ]; then
+    uci set wireless.wifinet3.key="$PASSWORD"
+fi
+uci commit wireless
+wifi reload
+/etc/init.d/network restart
+echo "Successfully connected to $SSID"
+
+get-time-restrictions and set-parental-controls
+These scripts parse GET parameters, validate input, and update firewall rules for parental controls.
+schedule_guest, main_devices.sh, repair_wifi, get_schedule.sh, and dashboard-control
+Each script handles specific tasks such as scheduling guest network toggles, listing devices from DHCP leases, repairing Wi-Fi, and managing router status and speed tests. Full code listings are available in the project repository.
+
+3 - VPN Setup Details
+The VPN configurations use ProtonVPN configuration files. Below is an example snippet from japan.conf:
+client
+dev tun
+proto udp
+remote <Japan_Server_IP> 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+<ca>
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+</ca>
+
+
+The corresponding japan.auth file contains:
+<username>
+<password>
+
+	The script togglevpn.sh uses OpenVPN’s CLI to load the selected configuration and manage the VPN connection.
+
+4 - AdGuard Home DNS Configuration
+AdGuard Home was installed and enabled with the following commands:
+opkg update
+opkg install adguardhome
+service adguardhome enable
+service adguardhome start
+
+DNS redirection was set by modifying dnsmasq settings via UCI:
+uci set dhcp.@dnsmasq[0].port="54"
+uci set dhcp.@dnsmasq[0].domain="lan"
+uci set dhcp.@dnsmasq[0].local="/lan/"
+uci set dhcp.@dnsmasq[0].expandhosts="1"
+uci set dhcp.@dnsmasq[0].cachesize="0"
+uci set dhcp.@dnsmasq[0].noresolv="1"
+uci -q del dhcp.@dnsmasq[0].server
+uci commit dhcp
+service dnsmasq restart
+service odhcpd restart	
+
+AdGuard Home’s web interface is available at http://70.70.70.1:8080.
+
+
+5 - Website Setup
+	The web dashboard files are stored in the /www directory. The main pages include:
+•	main.html – Login page with a password hint.
+•	dashboard.html – Displays router statistics (speed test, connected devices, blocking/unblocking, reboot/logout).
+•	vpn.html – Allows toggling VPN, server selection, and displays VPN logs.
+•	adguard.html – Provides DNS filtering toggles, real-time DNS statistics (via Chart.js), parental controls, and DNS logs.
+•	guest.html – Configures guest network settings, including SSID, password, bandwidth limits, QR code generation, and device management.
+•	settings.html – Contains Wi-Fi configuration, LAN settings, network scans, and port forwarding rules.
+	JavaScript in these pages uses await fetch("http://70.70.70.1/cgi-bin/…") to communicate with the CGI scripts, updating the UI dynamically based on the responses.
+
+6 - Boot and Autostart Configuration
+	To ensure all services run on startup, we configured the following:
+•	OpenVPN and AdGuard Home are enabled via their respective service scripts (e.g., service adguardhome enable).
+•	Cron jobs and autostart scripts (e.g., entries in /etc/crontabs/root) are set to run tasks like scheduling guest network toggles and restarting services after reboot.
+•	Custom scripts placed in /www/cgi-bin/ are referenced in autostart configuration to ensure seamless operation after power cycles.
