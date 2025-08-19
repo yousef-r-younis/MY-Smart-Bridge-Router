@@ -1,8 +1,0 @@
-#!/bin/ash
-
-killall openvpn 2>/dev/null
-sleep 4
-openvpn --config /etc/openvpn/japan.conf & disown
-echo "Content-type: text/plain"
-echo ""
-echo "VPN Japan started"
