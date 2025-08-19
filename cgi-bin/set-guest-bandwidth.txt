@@ -1,0 +1,34 @@
+#!/bin/sh
+echo "Content-type: application/json"
+echo ""
+
+read POST_DATA
+DOWNLOAD=$(echo "$POST_DATA" | grep -o 'download=[^&]*' | cut -d= -f2)
+UPLOAD=$(echo "$POST_DATA" | grep -o 'upload=[^&]*' | cut -d= -f2)
+
+# Validate input: must be non-negative integers (including 0)
+if echo "$DOWNLOAD" | grep -Eq '^[0-9]+$' && echo "$UPLOAD" | grep -Eq '^[0-9]+$'; then
+    # Find correct queue index for 'phy1-ap1'
+    INDEX=$(uci show sqm | grep "interface='phy1-ap1'" | cut -d'[' -f2 | cut -d']' -f1)
+
+    if [ -n "$INDEX" ]; then
+        if [ "$DOWNLOAD" -eq 0 ] || [ "$UPLOAD" -eq 0 ]; then
+            # If either value is 0, disable SQM for guest network
+            uci set sqm.@queue[$INDEX].enabled='0'
+        else
+            # Set values and enable SQM
+            uci set sqm.@queue[$INDEX].download="$DOWNLOAD"
+            uci set sqm.@queue[$INDEX].upload="$UPLOAD"
+            uci set sqm.@queue[$INDEX].enabled='1'
+        fi
+
+        uci commit sqm
+        /etc/init.d/sqm restart
+
+        echo "{\"status\": \"updated\", \"download\": \"$DOWNLOAD\", \"upload\": \"$UPLOAD\"}"
+    else
+        echo "{\"status\": \"error\", \"message\": \"Guest SQM profile not found\"}"
+    fi
+else
+    echo "{\"status\": \"error\", \"message\": \"Invalid input (only non-negative numbers allowed)\"}"
+fi

@@ -1,0 +1,16 @@
+#!/bin/sh
+echo "Content-type: text/plain"
+echo ""
+
+read POST_DATA
+SSID=$(echo "$POST_DATA" | grep -o 'ssid=[^&]*' | cut -d'=' -f2 | sed 's/%20/ /g')
+PASSWORD=$(echo "$POST_DATA" | grep -o 'password=[^&]*' | cut -d'=' -f2 | sed 's/%20/ /g')
+CHANNEL=$(echo "$POST_DATA" | grep -o 'channel=[^&]*' | cut -d'=' -f2 | sed 's/%20/ /g')
+
+uci set wireless.default_radio1.ssid="$SSID"
+uci set wireless.default_radio1.key="$PASSWORD"
+uci set wireless.radio1.channel="$CHANNEL"
+uci commit wireless
+wifi reload
+
+echo "WiFi settings updated: SSID=$SSID, PASSWORD=$PASSWORD, CHANNEL=$CHANNEL"

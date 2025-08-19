@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+import json
+import subprocess
+import sys
+import os
+
+def safe_output(data):
+    """Output JSON with headers"""
+    print("Content-Type: application/json")
+    print("Access-Control-Allow-Origin: *")
+    print()
+    print(json.dumps(data))
+
+def get_action():
+    """Get action from query string"""
+    query_string = os.environ.get('QUERY_STRING', '')
+    for param in query_string.split('&'):
+        if param.startswith('action='):
+            return param.split('=', 1)[1]
+    return None
+
+def main():
+    try:
+        action = get_action()
+
+        if action == 'reboot':
+            subprocess.run(['reboot'], check=True)
+            safe_output({"success": True, "message": "Reboot initiated"})
+
+        elif action == 'shutdown':
+            subprocess.run(['poweroff'], check=True)
+            safe_output({"success": True, "message": "Shutdown initiated"})
+
+        else:
+            safe_output({"success": False, "error": "Invalid action"})
+
+    except Exception as e:
+        safe_output({"success": False, "error": str(e)})
+
+if __name__ == "__main__":
+    main()
