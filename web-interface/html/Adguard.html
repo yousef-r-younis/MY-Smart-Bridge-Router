@@ -30,7 +30,6 @@
         font-size: 16px;
         font-weight: bold;
         text-shadow: 0 0 10px var(--dark-shadow);
-        text-wrap: nowrap;
     }
 
     .Rule-card {
@@ -51,8 +50,8 @@
     }
 
     .tooltip {
-    position: relative;
-    cursor: help;
+        position: relative;
+        cursor: help;
     }
 
     .tooltip-text {
@@ -130,20 +129,30 @@
 
     .domain-list {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
         gap: 10px;
         flex-wrap: wrap;
+        overflow-y: auto;
+        max-height: 150px;
+        padding: 10px;
     }
 
     .domain-item {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 8px;
-        padding: 8px;
+        padding: 5px;
         border: 2px solid var(--dark-border);
         border-radius: 15px;
         background-color: var(--dark-container-background);
     }
+
+    .domain-item button {
+        padding: 5px 10px;
+    }
+
     .time-section {
             display: flex;
             flex-direction: column;
@@ -154,14 +163,95 @@
         filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
     }
 
+    .schedule-input {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .time-input {
         display: flex;
         align-items: center;
         gap: 10px;
+        padding: 10px;
     }
 
     .time-input input {
         flex: 1;
+    }
+
+    .day-input {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .day-checkbox-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 16px;
+        font-weight: bold;
+        justify-content: center;
+        padding: 10px;
+    }
+
+    label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .Rule-section {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        max-height: 27vh;
+        padding: 10px;
+        overflow: auto;
+    }
+
+    .domainRule-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        padding: 10px 20px;
+        border: 2px solid var(--dark-border);
+        border-radius: 10px;
+        background-color: var(--dark-container-background);
+    }
+
+    .domainRule-item button {
+        grid-area: 1 / 2 / 4 / 2;
+        justify-self: end;
+        padding: 5px 10px;
+    }
+
+    .access-rule-list {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+        max-height: 27vh;
+        overflow: auto;
+    }
+
+    .accessRule-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        padding: 10px 20px;
+        border: 2px solid var(--dark-border);
+        border-radius: 10px;
+        background-color: var(--dark-container-background);
+    }
+
+    .accessRule-item button {
+        grid-area: 1 / 2 / 4 / 2;
+        justify-self: end;
+        padding: 5px 10px;
     }
 
     .query-card {
@@ -238,6 +328,10 @@
     .query-item strong {
         color: orange;
     }
+
+    body {
+        align-items: center;
+    }
 </style>
 
 </head>
@@ -279,6 +373,8 @@
                 </div>
             </header>
 
+            <div class="rule-section"></div>
+
             <button class="add-rule-button" onclick="openAddRule('addDomainRule-card')"><i class="fa fa-plus"></i> Add Rule</button>
 
             <div class="addRule-card" id="addDomainRule-card">
@@ -289,7 +385,7 @@
 
                 <h4>Choose Device</h4>
                 <select class="device_selector">
-                    <option value="all">All</option>
+                    <option value='all'>All</option>
                 </select>
 
                 <h4>Block a domain and write its URL. (e.g., example.com)</h4>
@@ -302,19 +398,34 @@
 
                 <div class="time-section">
                     <header>
-                        <h4>Time Schedule</h4>
+                        <h4>Time Schedule (optional)</h4>
                         <label class="switch">
                             <input type="checkbox" id="schedule-toggle" onclick="toggleSchedule()">
                             <span class="slider"></span>
                         </label>
                     </header>
 
-                    <span class="time-input" style="display: none;">
-                        <h5>From</h5>
-                        <input type="time" id="time_start" placeholder="Start Time">
-                        <h5>To</h5>
-                        <input type="time" id="time_end" placeholder="End Time">
-                    </span>
+                    <div class="schedule-input" style="display: none;">
+                        <span class="time-input">
+                            <h5>From</h5>
+                            <input type="time" id="time_start" placeholder="Start Time">
+                            <h5>To</h5>
+                            <input type="time" id="time_end" placeholder="End Time">
+                        </span>
+                        <div class="divider"></div>
+                        <span class="day-input">
+                            <h4>Days</h4>
+                            <span class="day-checkbox-group">
+                                <label><input type="checkbox" value="Mon"> Mon</label>
+                                <label><input type="checkbox" value="Tue"> Tue</label>
+                                <label><input type="checkbox" value="Wed"> Wed</label>
+                                <label><input type="checkbox" value="Thu"> Thu</label>
+                                <label><input type="checkbox" value="Fri"> Fri</label>
+                                <label><input type="checkbox" value="Sat"> Sat</label>
+                                <label><input type="checkbox" value="Sun"> Sun</label>
+                            </span>
+                        </span>
+                    </div>
                 </div>
 
                 <button onclick="addDomainRule()"><i class="fa fa-plus"></i> Add Rule</button>
@@ -330,6 +441,9 @@
                     <span class="tooltip-text">Block internet access for selected devices during specific time periods.</span>
                 </div>
             </header>
+
+            <div class="access-rule-list"></div>
+
             <button class="add-rule-button" onclick="openAddRule('addAccessRule-card')"><i class="fa fa-plus"></i> Add Rule</button>
 
             <div class="addRule-card" id="addAccessRule-card">
@@ -339,9 +453,7 @@
                 </header>
 
                 <h4>Choose Device</h4>
-                <select class="device-selector">
-                    <option value="all">All</option>
-                </select>
+                <select class="device-selector"></select>
 
                 <div class="time-section">
 
@@ -353,6 +465,21 @@
                         <h5>To</h5>
                         <input type="time" id="time-end" placeholder="End Time">
                     </span>
+
+                    <div class="divider"></div>
+
+                        <span class="day-input">
+                            <h4>Days (optional)</h4>
+                            <span class="day-checkbox-group">
+                                <label><input type="checkbox" id="mon-checkbox" value="Mon"> Mon</label>
+                                <label><input type="checkbox" id="tues-checkbox" value="Tue"> Tue</label>
+                                <label><input type="checkbox" id="wed-checkbox" value="Wed"> Wed</label>
+                                <label><input type="checkbox" id="thu-checkbox" value="Thu"> Thu</label>
+                                <label><input type="checkbox" id="fri-checkbox" value="Fri"> Fri</label>
+                                <label><input type="checkbox" id="sat-checkbox" value="Sat"> Sat</label>
+                                <label><input type="checkbox" id="sun-checkbox" value="Sun"> Sun</label>
+                            </span>
+                        </span>
                 </div>
 
                 <button onclick="addAccessRule()"><i class="fa fa-plus"></i> Add Rule</button>

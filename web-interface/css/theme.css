@@ -20,7 +20,7 @@
     --vpn-on-shadow: rgb(30, 255, 0);
     --vpn-on-background: linear-gradient(45deg, #00C853, #00E5B9);
     --vpn-off-background: linear-gradient(to left, rgba(255, 0, 0, 0.92), var(--dark-stats-background));
-    --font1: cursive, 'Courier New', Courier, monospace;
+    --font1: alegreya , 'Courier New', Courier, monospace;
     --font2: 'Times New Roman', 'Courier New', Courier, monospace;
 }
 
@@ -178,7 +178,8 @@
             gap: 40px;
             background-color: transparent;
             width: min(800px, 95%);
-            min-width: 390px;
+            margin: 0 auto;
+            padding: 0 10px;
         }
 
         .title-container {
@@ -215,12 +216,15 @@
         body {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             background-color: var(--dark-background);
             color: var(--dark-text);
-            min-width: 390px;
-            padding: 0 0 20px 0;
+            min-width: 300px;
+            min-height: 100vh;
+            padding: 20px 0px;
+            margin: 0;
+            box-sizing: border-box;
         }
 
         p {
@@ -233,7 +237,7 @@
             color: var(--dark-text);
             background: var(--dark-button-background);
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             padding: 10px 20px;
             transition: background 0.3s ease, transform 0.3s ease;
         }
@@ -255,8 +259,8 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            font-size: 47px;
-            padding: 20px;
+            font-size: 40px;
+            padding: 5px;
             transition: transform 0.3s, color 0.3s, text-shadow 0.3s;
         }
 
@@ -278,14 +282,14 @@
         }
 
         table {
-        width: 100%;
-        background-color: var(--dark-container-background);
-        border-radius: 12px;
-        border: 1px solid var(--dark-border);
-        overflow-y: auto;
-        border-collapse: collapse;
-        border-spacing: 0;
-        transition: box-shadow 0.3s ease;
+            width: 100%;
+            background-color: var(--dark-container-background);
+            border-radius: 12px;
+            border: 1px solid var(--dark-border);
+            overflow-y: auto;
+            border-collapse: collapse;
+            border-spacing: 0;
+            transition: box-shadow 0.3s ease;
         }
 
         table:hover {
@@ -331,28 +335,6 @@
             background-color: rgba(95, 0, 40, 0.3);
         }
 
-        @media (max-width: 768px) {
-
-            .table-container {
-                max-height: 60vh;
-                margin: 0 -10px;
-                border-radius: 0;
-                border-left: none;
-                border-right: none;
-            }
-
-            table th,
-            table td {
-                padding: 8px 12px;
-                font-size: 0.9rem;
-            }
-
-            table th {
-                font-size: 0.75rem;
-            }
-
-        }
-
         ::placeholder {
             color: rgba(255, 255, 255, 0.8);
             font-style: italic;
@@ -360,12 +342,12 @@
 
         input {
             width: 100%;
-            padding: 10px;
+            padding: 13px;
             border: 1px solid var(--dark-border);
             border-radius: 5px;
             background-color: var(--dark-container-background);
             color: var(--dark-text);
-            cursor: pointer;
+            cursor: text;
         }
 
         input:focus {
@@ -376,7 +358,7 @@
 
         select {
             width: 100%;
-            padding: 10px;
+            padding: 13px;
             border: 2px solid var(--dark-border);
             border-radius: 5px;
             background-color: var(--dark-container-background);
@@ -408,7 +390,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: var(--vpn-on-background);
+            background: linear-gradient(to right, rgba(0, 255, 0, 0.9), rgba(0, 75, 0, 0.9));
             border: 3px solid green;
             color: rgb(0, 75, 0);
             border-radius: 30px;
@@ -417,31 +399,90 @@
             display: none;
             text-align: center;
             animation: fade-in 0.5s ease-in-out, fade-out 0.5s ease-in-out 2s forwards;
+        }
+
+        .failed-notification-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(to right, rgba(255, 0, 0, 0.9), rgba(60, 0, 0, 0.9));
+            border: 3px solid red;
+            color: var(--dark-text);
+            border-radius: 30px;
+            padding: 20px 40px;
+            z-index: 9999;
+            display: none;
+            text-align: center;
+            animation: fade-in 0.5s ease-in-out, fade-out 0.5s ease-in-out 2s forwards;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0;
+                display:none; }
+        }
+
+        @media (max-width: 480px) {
+        .container {
+            gap: 20px !important;
+            padding: 0 15px;
+        }
+
+        body {
+            padding: 10px 0 !important;
+        }
+
+        .back-button {
+            padding: 5px !important;
+        }
+
+        .title {
+            font-size: 30px !important;
+        }
+
+        .card {
+            padding: 10px !important;
+            gap: 12px !important;
+        }
+
+        button {
+            padding: 12px !important;
+        }
+
+        input, select {
+            padding: 15px !important;
+        }
+
+        .moon, .sun {
+            padding: 18px !important;
+        }
+
+        .notification-popup, .failed-notification-popup {
+            padding: 15px 30px !important;
+        }
+
+}
+
+
+@media (max-width: 768px) {
+    .container {
+        width: calc(100% - 20px);
+        gap: 25px;
     }
 
-    .failed-notification-popup {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: var(--vpn-off-background);
-        border: 3px solid red;
-        color: var(--dark-text);
-        border-radius: 30px;
-        padding: 20px 40px;
-        z-index: 9999;
-        display: none;
-        text-align: center;
-        animation: fade-in 0.5s ease-in-out, fade-out 0.5s ease-in-out 2s forwards;
+    .title {
+        font-size: 36px;
     }
 
-    @keyframes fade-in {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .card {
+        padding: 18px;
+        gap: 18px;
     }
+}
 
-    @keyframes fade-out {
-        from { opacity: 1; }
-        to { opacity: 0;
-            display:none; }
-    }

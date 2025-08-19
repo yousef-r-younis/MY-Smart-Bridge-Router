@@ -108,19 +108,19 @@ window.openEditPopup = async function (setting) {
                     <span class="slider"></span>
                 </label>
             `;
-            const data = await getGuestBandwidth();
-            const poptog = document.querySelector('#popupToggle');
-            data.enabled === '1' ? poptog.checked = true : poptog.checked = false;
             popupactions.innerHTML = `
             <button class="popup-button" onclick="saveChanges('bandwidth')">Save</button>
             <button class="popup-button" onclick="closeEditPopup()">Cancel</button>
             `;
+            const data = await getGuestBandwidth();
+            const poptog = document.querySelector('#popupToggle');
+            data.enabled === '1' ? poptog.checked = true : poptog.checked = false;
             break;
 
         case 'password':
             popupTitle.textContent = 'Set Password';
             popupContent.innerHTML = `
-                    <input type="password" id="popupPasswordInput" placeholder="Password">
+                <input type="password" id="popupPasswordInput" placeholder="Password">
             `;
             popupact.style.display = 'none';
             popupactions.innerHTML = `

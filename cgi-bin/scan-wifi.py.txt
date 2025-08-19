@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import re
+
+def safe_output(data):
+    """Output JSON with HTTP headers for CGI"""
+    print("Content-Type: application/json")
+    print("Access-Control-Allow-Origin: *")
+    print()
+    print(json.dumps(data))
+
+def parse_scan_output(scan_output):
+    """Parse iwinfo scan output into structured list of networks"""
+    networks = []
+    cell = {}
+
+    for line in scan_output.splitlines():
+        line = line.strip()
+
+        # New cell (new network found)
+        if line.startswith("Cell "):
+            if cell:
+                networks.append(cell)
+            cell = {}
+            addr_match = re.search(r"Address:\s*([0-9A-Fa-f:]+)", line)
+            if addr_match:
+                cell["address"] = addr_match.group(1)
+
+        elif line.startswith("ESSID:"):
+            essid_match = re.search(r'ESSID:\s*"(.+)"', line)
+            if essid_match:
+                cell["essid"] = essid_match.group(1)
+
+        elif "Frequency:" in line and "Channel:" in line:
+            # Extract frequency
+            freq_match = re.search(r"Frequency:\s*([\d.]+)\s*GHz", line)
+            if freq_match:
+                cell["frequency_ghz"] = float(freq_match.group(1))
+            # Extract band
+            band_match = re.search(r"Band:\s*([\d.]+\s*GHz)", line)
+            if band_match:
+                cell["band"] = band_match.group(1)
+            # Extract channel
+            ch_match = re.search(r"Channel:\s*(\d+)", line)
+            if ch_match:
+                cell["channel"] = int(ch_match.group(1))
+
+        elif line.startswith("Signal:"):
+            sig_match = re.search(r"Signal:\s*(-?\d+)\s*dBm", line)
+            if sig_match:
+                cell["signal_dbm"] = int(sig_match.group(1))
+            qual_match = re.search(r"Quality:\s*(\d+)/(\d+)", line)
+            if qual_match:
+                cell["quality"] = {
+                    "value": int(qual_match.group(1)),
+                    "max": int(qual_match.group(2))
+                }
+
+        elif line.startswith("Encryption:"):
+            enc_match = re.search(r"Encryption:\s*(.+)", line)
+            if enc_match:
+                cell["encryption"] = enc_match.group(1)
+
+    # Append last cell if exists
+    if cell:
+        networks.append(cell)
+
+    return networks
+
+def main():
+    try:
+        # Get first station or AP interface
+        iwinfo_output = subprocess.check_output(["iwinfo"], text=True)
+        interface_match = re.search(r"^(\S+)", iwinfo_output)
+        if not interface_match:
+            safe_output({"error": "No station interface found"})
+            return
+
+        interface = interface_match.group(1)
+
+        # Scan Wi-Fi networks
+        scan_output = subprocess.check_output(["iwinfo", interface, "scan"], text=True)
+        networks = parse_scan_output(scan_output)
+
+        safe_output({
+            "interface": interface,
+            "count": len(networks),
+            "networks": networks
+        })
+
+    except subprocess.CalledProcessError as e:
+        safe_output({"error": "Failed to run iwinfo", "details": str(e)})
+    except Exception as e:
+        safe_output({"error": str(e)})
+
+if __name__ == "__main__":
+    main()

@@ -8,7 +8,7 @@ import sys
 
 
 def run_command(cmd):
-    """Run shell command and return output with better error handling"""
+    """Run shell command and return output"""
     try:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
         return result.stdout.strip() if result.returncode == 0 else ""
@@ -28,7 +28,7 @@ def is_device_reachable(ip, mac):
         if 'REACHABLE' in arp_output.upper() or mac.lower() in arp_output.lower():
             return True
 
-    # Alternative: try to ping the device (quick check)
+    # Alternative: ping the device (quick check)
     ping_result = run_command(f"ping -c 1 -W 1 {ip} >/dev/null 2>&1 && echo 'reachable'")
     return ping_result == 'reachable'
 
@@ -226,7 +226,7 @@ def get_ethernet_details(mac, ip):
                         'tx_errors': int(fields[11]) if fields[11].isdigit() else None,
                     })
 
-        # Try to get link speed and duplex (for physical ethernet interfaces)
+        # get link speed and duplex (for physical ethernet interfaces)
         if interface and interface != 'br-lan':
             ethtool_info = run_command(f"ethtool {interface} 2>/dev/null")
             if ethtool_info:

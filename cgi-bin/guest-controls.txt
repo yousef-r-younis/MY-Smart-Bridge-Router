@@ -1,0 +1,76 @@
+#!/bin/sh
+echo "Content-type: application/json"
+echo ""
+
+# Read POST data if available
+read POST_DATA
+
+# Proper URL decode function
+urldecode() {
+    local data="${1//+/ }"
+    printf '%b' "${data//%/\\x}"
+}
+
+# Extract parameters from POST data
+SSID_RAW=$(echo "$POST_DATA" | grep -o 'ssid=[^&]*' | cut -d= -f2)
+PASSWORD_RAW=$(echo "$POST_DATA" | grep -o 'password=[^&]*' | cut -d= -f2)
+TOGGLE=$(echo "$QUERY_STRING" | grep -o 'toggle=true')
+
+SSID=$(urldecode "$SSID_RAW")
+PASSWORD=$(urldecode "$PASSWORD_RAW")
+
+STATUS=$(uci get wireless.wifinet2.disabled 2>/dev/null)
+
+# If disabled setting doesn't exist, it means the interface is enabled
+if [ -z "$STATUS" ]; then
+    STATUS="0"  # Missing disabled setting = enabled
+fi
+
+# Fix SSID to remove \x20 (replace with actual spaces)
+SSID_CURRENT=$(uci get wireless.wifinet2.ssid 2>/dev/null | sed 's/\\x20/ /g')
+
+# Ensure password is properly retrieved
+PASSWORD_CURRENT=$(uci get wireless.wifinet2.key 2>/dev/null)
+
+# If UCI says it's disabled but it's actually running, fix the status
+if [ "$STATUS" = "1" ] && ifconfig | grep -q "wifinet2"; then
+    STATUS="0"
+fi
+
+CHANGED=0
+
+# Toggle guest WiFi if ?toggle=true is sent
+if [ "$TOGGLE" = "toggle=true" ]; then
+    if [ "$STATUS" = "1" ]; then
+        uci set wireless.wifinet2.disabled='0'
+        STATUS="0"
+    else
+        uci set wireless.wifinet2.disabled='1'
+        STATUS="1"
+    fi
+    CHANGED=1
+fi
+
+# Update SSID if provided
+if [ -n "$SSID" ]; then
+    uci set wireless.wifinet2.ssid="$SSID"
+    SSID_CURRENT="$SSID"
+    CHANGED=1
+fi
+
+# Update password if provided
+if [ -n "$PASSWORD" ]; then
+    uci set wireless.wifinet2.key="$PASSWORD"
+    uci set wireless.wifinet2.encryption='psk2'
+    PASSWORD_CURRENT="$PASSWORD"
+    CHANGED=1
+fi
+
+# Apply changes if anything was modified
+if [ "$CHANGED" -eq 1 ]; then
+    uci commit wireless.wifinet2  # Only commit guest WiFi settings
+    wifi reload
+fi
+
+# Return current settings as JSON
+echo "{\"status\": \"$STATUS\", \"ssid\": \"$SSID_CURRENT\", \"password\": \"$PASSWORD_CURRENT\"}"
