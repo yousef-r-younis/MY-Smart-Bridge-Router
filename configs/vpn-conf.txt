@@ -1,0 +1,24 @@
+# OpenVPN Client Configuration
+
+client                    # Run in client mode
+dev tun                   # Use TUN interface for routing
+proto udp                 # Use UDP protocol for better performance
+remote 149.36.51.3 80     # Connect to server on port 80 (HTTP bypass)
+remote 149.36.51.3 1194   # Connect to server on port 1194 (standard OpenVPN)
+remote 149.36.51.3 51820  # Connect to server on port 51820
+remote 149.36.51.3 4569   # Connect to server on port 4569
+remote 149.36.51.3 5060   # Connect to server on port 5060 (SIP bypass)
+remote-random             # Randomly select from available remotes
+resolv-retry infinite     # Keep trying to resolve server hostname
+nobind                    # Don't bind to local address/port
+cipher AES-256-GCM        # Use AES-256-GCM encryption
+setenv CLIENT_CERT 0      # No client certificate required
+tun-mtu 1500              # Set TUN interface MTU to 1500 bytes
+mssfix 0                  # Disable TCP MSS fixing (let server handle)
+persist-key               # Keep keys loaded across connection restarts
+persist-tun               # Keep TUN interface open across restarts
+reneg-sec 0               # Disable periodic key renegotiation
+remote-cert-tls server    # Verify server certificate is for server use
+auth-user-pass            # Use username/password authentication
+
+# Certificate and authentication credentials provided by VPN server provider

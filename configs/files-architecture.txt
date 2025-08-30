@@ -1,0 +1,22 @@
+/www/
+├── Main.html                     # Router main page
+├── Dashboard.html                # Dashboard interface
+├── AdGuard.html                  # AdGuard management page
+├── VPN.html                      # VPN configuration page
+├── Guest.html                    # Guest network settings
+└── Settings.html                 # System settings page
+
+/www/css/
+└── theme.css                     # Main stylesheet
+
+/www/js/
+├── Auth.js                       # Authentication handling
+├── Main.js                       # Main page functionality
+├── Dashboard.js                  # Dashboard page logic
+├── AdGuard.js                    # AdGuard page controls
+├── VPN.js                        # VPN page management
+├── Guest.js                      # Guest network functions
+└── Settings.js                   # Settings page logic
+
+/www/cgi-bin/
+└── # Scripts provided in the script directory
